@@ -1,13 +1,13 @@
 import logo from './logo.svg';
 import './App.css';
-import { createBrotliCompress } from 'zlib';
 
 function App() {
   function createRoom() {
     fetch('/rooms', {
       method: 'POST',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ name: 'Tester Room' })
     })
