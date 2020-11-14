@@ -175,10 +175,13 @@ async function main() {
 
   const app = express();
   app.use(bodyParser.json());
+  const path = require('path');
+
+  app.use(express.static(path.join(__dirname, 'build')));
 
   const port = 8080;
   app.get('/', (req, res) => {
-    res.send('Hello World!');
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
   });
 
   app.post('/rooms', async (req, res) => {
