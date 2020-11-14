@@ -1,113 +1,9 @@
-const { Sequelize, DataTypes } = require('sequelize');
+const { Sequelize, DataTypes, Op } = require('sequelize');
 
 const sequelize = new Sequelize('sqlite::memory:');
+const { User, Room, UserSessions, Question, Answer } = require('./models')(sequelize);
 
-const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false
-  }
-});
-
-const Room = sequelize.define('Room', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-});
-
-const Question = sequelize.define('Question', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  question: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  hint: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  index: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  room_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: Room,
-      key: 'id'
-    }
-  }
-});
-
-const Answer = sequelize.define('Answer', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  answer: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  index: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  correct: {
-    type: DataTypes.BOOLEAN
-  },
-  question_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: Question,
-      key: 'id'
-    }
-  }
-});
-
-Question.hasMany(Answer);
-Answer.belongsTo(Question);
-Question.belongsTo(Room);
-Room.hasMany(Question);
-
-const UserSessions = sequelize.define('UserSessions', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  user_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: User,
-      key: 'id'
-    }
-  },
-  room_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: Room,
-      key: 'id'
-    }
-  }
-});
-
-User.belongsToMany(Room, { through: 'UserSessions' });
-Room.belongsToMany(User, { through: 'UserSessions' });
+authenticate().then(create).then(main);
 
 async function authenticate() {
   try {
@@ -123,8 +19,6 @@ async function create() {
   await sequelize.sync();
 }
 
-authenticate().then(create).then(main);
-
 const express = require('express');
 const bodyParser = require('body-parser');
 
@@ -134,6 +28,11 @@ async function main() {
   await mark.save();
   const kristen = User.build({name: 'Kristen'});
   await kristen.save();
+
+  console.log('All users are: ');
+  for (let user of await User.findAll()) {
+    console.log("\nName: " + user.name + "\nID: " + user.id + "\n\n");
+  }
 
   let room = Room.build({name: 'codeminers'});
   await room.save();
@@ -185,15 +84,43 @@ async function main() {
   });
 
   app.post('/rooms', async (req, res) => {
-    console.log('Received POST request to /rooms');
-    console.log('Body:');
-    console.log(req.body);
     const room = Room.build({ name: req.body.name });
     await room.save();
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.write(JSON.stringify({...room.dataValues}));
     res.end();
   });
+
+  app.post('/sessions', async (req, res) => {
+    console.log('Received request to join room...');
+    console.log('Room ID: ' + req.body.roomId);
+    console.log('User ID: ' + req.body.userId);
+    let room = await Room.findByPk(req.body.roomId);
+    console.log('Found Room: ');
+    console.log(JSON.stringify(room.dataValues));
+    const user = await User.findByPk(req.body.userId);
+    console.log('Found user: ');
+    console.log(user.dataValues);
+
+    room.addUser(user);
+
+    room = await room.save();
+    const session = await UserSessions.findOne({
+      where: {
+        [Op.and]: [
+          { userId: user.id },
+          { roomId: room.id }
+        ]
+      }
+    });
+
+    console.log('Created session: ');
+    console.log(session);
+
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.write(JSON.stringify(session.dataValues));
+    res.end();
+  })
 
   app.listen(port, () => {
     console.log('Trivia Server app is now listening');
