@@ -2,17 +2,9 @@ import logo from './logo.svg';
 import './App.css';
 
 function App() {
+  const dispatch = useDispatch();
   function createRoom() {
-    fetch('/rooms', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ name: 'Tester Room' })
-    })
-    .then(res => res.json())
-    .then(json => console.log(json));
+    dispatch(createNewRoom('test'));
   }
 
   return (
