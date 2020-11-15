@@ -10,7 +10,7 @@ export function roomsReducer(state = initialState, action) {
         case CREATE_ROOM_RESPONSE: {
             return {
                 ...state,
-                currrentRoom: action.payload
+                currentRoom: action.payload
             }
         }
         default: {

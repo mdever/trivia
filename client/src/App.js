@@ -1,10 +1,15 @@
 import logo from './logo.svg';
 import './App.css';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
 
+const chooseRoom = (state) => {
+  return state.rooms.currentRoom;
+}
 function App() {
   const dispatch = useDispatch();
+  const room = useSelector(chooseRoom);
+
   function createRoom() {
     dispatch(createNewRoom('test'));
   }
@@ -26,6 +31,7 @@ function App() {
         </a>
       </header>
       <button onClick={(event) => createRoom()}>Create Room</button>
+      <div>{room ? room.id : 'No Room Joined'}</div>
     </div>
   );
 }
