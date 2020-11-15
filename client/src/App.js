@@ -1,5 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
+import { useDispatch } from 'react-redux';
+import { createNewRoom } from './redux/reducers/rooms';
 
 function App() {
   const dispatch = useDispatch();

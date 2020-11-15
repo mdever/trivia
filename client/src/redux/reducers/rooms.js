@@ -4,7 +4,7 @@ const initialState = {
     currentRoom: null
 }
 
-export default function roomsReducer(state = initialState, action) {
+export function roomsReducer(state = initialState, action) {
 
     switch (action.type) {
         case CREATE_ROOM_RESPONSE: {
@@ -12,6 +12,9 @@ export default function roomsReducer(state = initialState, action) {
                 ...state,
                 currrentRoom: action.payload
             }
+        }
+        default: {
+            return initialState;
         }
     }
 }
