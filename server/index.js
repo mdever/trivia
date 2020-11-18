@@ -83,6 +83,15 @@ async function main() {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
   });
 
+  app.post('/users', async (req, res) => {
+    console.log('Received request to create new user: ' + req.body.name);
+    const user = User.build({ name: req.body.name });
+    await user.save();
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.write(JSON.stringify({...user.dataValues}));
+    res.end();
+  })
+
   app.post('/rooms', async (req, res) => {
     const room = Room.build({ name: req.body.name });
     await room.save();
@@ -92,14 +101,9 @@ async function main() {
   });
 
   app.post('/sessions', async (req, res) => {
-    console.log('Received request to join room...');
-    console.log('Room ID: ' + req.body.roomId);
-    console.log('User ID: ' + req.body.userId);
     let room = await Room.findByPk(req.body.roomId);
-    console.log('Found Room: ');
     console.log(JSON.stringify(room.dataValues));
     const user = await User.findByPk(req.body.userId);
-    console.log('Found user: ');
     console.log(user.dataValues);
 
     room.addUser(user);
