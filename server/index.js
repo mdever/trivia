@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 
 const { Sequelize, DataTypes, Op } = require('sequelize');
 const sequelize = new Sequelize('sqlite::memory:');
-const { User, Room, UserSessions, Question, Answer, Game } = require('./models')(sequelize);
+const models = require('./models')(sequelize);
 
 
 const app = express();
@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 
 const port = 8080;
 
-const webRoutes = require('./web.js')(app);
+const webRoutes = require('./web.js')(app, models);
 
 async function authenticate() {
   try {

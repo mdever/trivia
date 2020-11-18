@@ -1,4 +1,4 @@
-module.exports = function(app) {
+module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game}) {
 
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
