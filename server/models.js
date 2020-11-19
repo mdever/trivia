@@ -29,16 +29,6 @@ module.exports = function(sequelize) {
                 model: User,
                 key: 'id'
             }
-        },
-        datePlayed: {
-            type: DataTypes.DATE
-        },
-        winner: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: User,
-                key: 'id'
-            }
         }
     })
     
@@ -59,6 +49,13 @@ module.exports = function(sequelize) {
             type: DataTypes.INTEGER,
             references: {
                 model: Game,
+                key: 'id'
+            }
+        },
+        winner: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: User,
                 key: 'id'
             }
         }
@@ -117,10 +114,7 @@ module.exports = function(sequelize) {
         }
     });
     
-    Question.hasMany(Answer);
-    Answer.belongsTo(Question);
-    Question.belongsTo(Room);
-    Room.hasMany(Question);
+
     
     const UserSessions = sequelize.define('UserSessions', {
         id: {
@@ -144,11 +138,19 @@ module.exports = function(sequelize) {
         }
     });
     
+    Question.hasMany(Answer);
+    Answer.belongsTo(Question);
+
+    Question.belongsTo(Room);
+    Room.hasMany(Question);
+
     User.belongsToMany(Room, { through: UserSessions });
     Room.belongsToMany(User, { through: UserSessions });
-    Room.hasOne(Game);
+    
+    Room.belongsTo(Game);
     Game.hasMany(Room);
-    Game.hasOne(User);
+
+    Game.belongsTo(User);
     User.hasMany(Game, {
         foreignKey: 'owner_id'
     });

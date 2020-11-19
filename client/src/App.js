@@ -1,29 +1,37 @@
 import logo from './logo.svg';
 import './App.css';
 import Main from './Main.js';
+import HomePage from './components/HomePage/HomePage';
+import Header from './components/Header/Header';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { useState } from 'react';
 import { createNewUser } from './redux/reducers/users';
+import { newUserErrorSelector, currentRoomSelector, currentUserSelector } from './redux/selectors';
 
-
-
-const currentRoom = (state) => {
-  return state.rooms.currentRoom;
-}
-
-const currentUser = (state) => state.users.currentUser;
 
 function NewPlayer(props) {
   const [player, setPlayer] = useState({name: ''});
 
+
+  const error = useSelector(newUserErrorSelector);
+
   return (
     <div>
-      <h3>Player Name</h3>
-      <input type="text" name="name" onChange={(ev) => setPlayer({name: ev.target.value}) }/>
-      <input type="submit" onClick={() => props.onSubmit(player)} />
+      <BannerImage />
+      <div>
+        <h3>Player Name</h3>
+        <input type="text" name="name" onChange={event => setPlayer({name: event.target.value}) }/>
+        <input type="submit" onClick={() => props.onSubmit(player)} />
+      </div>
+      {error && 
+        <div>
+          <p>Sorry, something went wrong creating a user</p>
+          <p>{error.message}</p>
+        </div>
+      }
     </div>
   )
 }
@@ -44,8 +52,8 @@ function BannerImage() {
 
 function App() {
   const dispatch = useDispatch();
-  const room = useSelector(currentRoom);
-  const user = useSelector(currentUser);
+  const room = useSelector(currentRoomSelector);
+  const user = useSelector(currentUserSelector);
 
   function submitPlayer(player) {
     dispatch(createNewUser(player.name));
@@ -57,20 +65,18 @@ function App() {
 
   return (
     <div className="App">
+      <Header />
       <Main>
-        { !user &&
-          <BannerImage />
-        }
         <Router>
           <Switch>
             <Route path="/">
               {!user   
               ?  <NewPlayer onSubmit={(player) => submitPlayer(player) }/>
-              :  <PlayerCard player={user} />
+              :  <HomePage user={user} />
               }
             </Route>
             <Route path="/rooms/:id">
-
+              
             </Route>
           </Switch>
         </Router>

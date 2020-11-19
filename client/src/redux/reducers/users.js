@@ -1,8 +1,9 @@
-import { NEW_USER, NEW_USER_RESPONSE } from '../actionTypes';
-import { newUserResponse } from '../actions';
+import { NEW_USER, NEW_USER_RESPONSE, NEW_USER_ERROR } from '../actionTypes';
+import { newUserResponse, newUserError } from '../actions';
 
 const initialState = {
-    currentUser: null
+    currentUser: null,
+    error: null
 };
 
 export function userReducer(state = initialState, action) {
@@ -16,6 +17,15 @@ export function userReducer(state = initialState, action) {
                 currentUser: action.payload
             }
         }
+        case NEW_USER_ERROR: {
+            return {
+                ...state,
+                error: {
+                    code: action.payload.code,
+                    message: action.payload.message
+                }
+            }
+        }
         default: {
             return state;
         }
@@ -24,16 +34,20 @@ export function userReducer(state = initialState, action) {
 
 export function createNewUser(name) {
     return async function(dispatch, getState) {
-        const res = await fetch('/users', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name })
-        });
+        try {
+            const res = await fetch('/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name })
+            });
 
-        const json = await res.json();
-
-        dispatch(newUserResponse(json));
+            const json = await res.json();
+            dispatch(newUserResponse(json));
+        } catch (error) {
+            console.log('NEW_USER_ERROR:', error);
+            dispatch(newUserError('500','Server Error: Could not create a user'));
+        }
     }
 }

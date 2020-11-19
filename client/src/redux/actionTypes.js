@@ -4,3 +4,4 @@ export const CREATE_ROOM = "CREATE_ROOM";
 export const ADD_USER_TO_ROOM = "ADD_USER_TO_ROOM";
 export const NEW_USER = "NEW_USER";
 export const NEW_USER_RESPONSE = "NEW_USER_RESPONSE";
+export const NEW_USER_ERROR = "NEW_USER_ERROR";
