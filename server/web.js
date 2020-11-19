@@ -15,9 +15,24 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
 
   app.post('/rooms', async (req, res) => {
     const room = Room.build({ name: req.body.name });
+    const game = await Game.findOne({ id: req.body.game_id });
+    room.setGame(game);
     await room.save();
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.write(JSON.stringify({...room.dataValues}));
+    res.end();
+  });
+
+  app.post('/games', async (req, res) => {
+    const game = Game.build({
+      name: req.body.name
+    })
+    const user = await User.findOne({ id: req.body.user_id });
+    game.setUser(user);
+
+    await game.save();
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.write(JSON.stringify({ ...game.dataValues }));
     res.end();
   });
 

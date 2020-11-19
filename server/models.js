@@ -146,8 +146,12 @@ module.exports = function(sequelize) {
     
     User.belongsToMany(Room, { through: UserSessions });
     Room.belongsToMany(User, { through: UserSessions });
-    Room.belongsTo(Game);
+    Room.hasOne(Game);
     Game.hasMany(Room);
+    Game.hasOne(User);
+    User.hasMany(Game, {
+        foreignKey: 'owner_id'
+    });
     
 
     return {
