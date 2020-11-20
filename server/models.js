@@ -150,7 +150,9 @@ module.exports = function(sequelize) {
     Room.belongsTo(Game);
     Game.hasMany(Room);
 
-    Game.belongsTo(User);
+    Game.belongsTo(User, {
+        foreignKey: 'owner_id'
+    });
     User.hasMany(Game, {
         foreignKey: 'owner_id'
     });

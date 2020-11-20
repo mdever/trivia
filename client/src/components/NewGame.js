@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { createNewGame } from '../redux/actions';
 
@@ -9,8 +9,11 @@ export default function NewGame() {
     const [name, setName] = useState('');
     const dispatch = useDispatch();
 
+    const complete = useSelector(state => state.games.currentGame);
+
     const onClick = (event) => {
-        dispatch(createNewGame(name));
+        dispatch(createNewGame(name))
+            .then(res => console.log(res));
     }
 
     return (

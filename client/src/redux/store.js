@@ -20,6 +20,11 @@ if (user) {
         users: {
             currentUser: user,
             error: null
+        },
+        games: {
+            games: [],
+            currentGame: null,
+            error: null
         }
     }
     store = createStore(rootReducer, initialState, composedEnhancer)

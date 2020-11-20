@@ -39,13 +39,13 @@ export function createNewGame(name) {
                 },
                 body: JSON.stringify({
                     name,
-                    user_id: user.id
+                    owner_id: user.id
                 })
             });
 
             res = await res.json();
 
-            dispatch(newGameSuccess(res)); 
+            dispatch(newGameSuccess(res));
         } catch (error) {
             console.log('Error at createNewGame():', error);
             dispatch({ type: NEW_GAME_ERROR, payload: error});

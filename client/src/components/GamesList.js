@@ -15,7 +15,7 @@ export default function GamesList() {
         <div>
             <ul>
             {   games.map(game => {
-                    return <li>
+                    return <li key={game.id}>
                         <GameItem game={game} />
                     </li>
                 })
