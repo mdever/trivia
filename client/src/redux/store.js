@@ -1,12 +1,30 @@
-import { createStore, applyMiddleware, combineReducers } from 'redux';
+import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 import rootReducer from './reducers';
 import { composeWithDevTools } from 'redux-devtools-extension';
 
+let user = localStorage.getItem('user');
 
 const composedEnhancer = composeWithDevTools(
     applyMiddleware(thunk)
 );
 
-const store = createStore(rootReducer, composedEnhancer);
+let store = null;
+
+if (user) {
+    user = JSON.parse(user);
+    let initialState = {
+        rooms: {
+            currentRoom: null
+        },
+        users: {
+            currentUser: user,
+            error: null
+        }
+    }
+    store = createStore(rootReducer, initialState, composedEnhancer)
+} else {
+    store = createStore(rootReducer, composedEnhancer);
+}
+
 export default store;

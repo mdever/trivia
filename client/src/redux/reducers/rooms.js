@@ -1,7 +1,8 @@
-import { CREATE_ROOM, CREATE_ROOM_RESPONSE } from '../actionTypes';
+import { CREATE_ROOM, CREATE_ROOM_RESPONSE, CREATE_ROOM_ERROR } from '../actionTypes';
 
 const initialState = {
-    currentRoom: null
+    currentRoom: null,
+    error: null
 }
 
 export function roomsReducer(state = initialState, action) {
@@ -13,6 +14,12 @@ export function roomsReducer(state = initialState, action) {
                 currentRoom: action.payload
             }
         }
+        case CREATE_ROOM_ERROR: {
+            return {
+                ...state,
+                error: action.payload
+            }
+        }
         default: {
             return state;
         }
@@ -21,15 +28,20 @@ export function roomsReducer(state = initialState, action) {
 
 export function createNewRoom(name) {
     return async function(dispatch, getState) {
-        let res = await fetch('/rooms', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({name})
-        });
+        try {
+                let res = await fetch('/rooms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({name})
+            });
 
-        let json = await res.json();
-        dispatch({type: CREATE_ROOM_RESPONSE, payload: json});
+            let json = await res.json();
+
+            dispatch({ type: CREATE_ROOM_RESPONSE, payload: json });
+        } catch (error) {
+            dispatch({ type: CREATE_ROOM_ERROR, payload: { code: error.code, message: error.message }})
+        }
     }
 }

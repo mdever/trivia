@@ -3,6 +3,7 @@ import './App.css';
 import Main from './Main.js';
 import HomePage from './components/HomePage/HomePage';
 import Header from './components/Header/Header';
+import Footer from './components/Footer/Footer';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
@@ -65,8 +66,8 @@ function App() {
 
   return (
     <div className="App">
-      <Header />
       <Main>
+        <Header />
         <Router>
           <Switch>
             <Route path="/">
@@ -80,7 +81,9 @@ function App() {
             </Route>
           </Switch>
         </Router>
+        <Footer />
       </Main>
+
     </div>
   );
 }

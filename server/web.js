@@ -27,7 +27,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
     const game = Game.build({
       name: req.body.name
     })
-    const user = await User.findOne({ id: req.body.user_id });
+    const user = await User.findByPk(req.body.user_id);
     game.setUser(user);
 
     await game.save();

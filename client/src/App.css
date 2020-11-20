@@ -1,5 +1,9 @@
 @import "~bootstrap/dist/css/bootstrap";
 
+#root { 
+  padding-top: 2rem;
+}
+
 label {
   margin-bottom: 0;
 }
@@ -12,3 +16,16 @@ label {
   height: 100%;
   position: relative;
 }
+
+label {
+  margin-right: 0.5rem;
+}
+
+input {
+  padding-top: 0.1rem;
+  margin-right: 0.5rem;
+}
+
+.full-width {
+  width: 100%;
+} 

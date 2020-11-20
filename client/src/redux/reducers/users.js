@@ -44,6 +44,7 @@ export function createNewUser(name) {
             });
 
             const json = await res.json();
+            localStorage.setItem('user', JSON.stringify(json));
             dispatch(newUserResponse(json));
         } catch (error) {
             console.log('NEW_USER_ERROR:', error);

@@ -1,23 +1,17 @@
 import * as styles from './HomePage.css';
 import * as React from 'react';
 
-
+import NewGame from '../../components/NewGame';
+import GamesList from '../../components/GamesList';
 
 function JoinRoom() {
-    const joinRoomStyles = {
-        'position': 'absolute',
-        'top': '50%',
-        'transform': 'translateY(-50%)'
-    };
-
     return (
-        <React.Fragment>
-            <div style={joinRoomStyles}>
-                <label for="code">Code:</label>
-                <input type="text" name="code"/>
-                <input type="submit" value="submit" />
-            </div>
-        </React.Fragment>
+        <div className="full-width">
+            <h3>Join Game</h3>
+            <label htmlFor="code">Code:</label>
+            <input type="text" name="code"/>
+            <button className="btn btn-primary">Join</button>
+        </div>
     );
 }
 
@@ -25,21 +19,18 @@ export default function HomePage(props) {
     const user = props.user;
 
     return (
-        <div id="home-page" className="container">
-            <div class="row justify-content-center" style={{minHeight: '200px'}}>
-                <div class="col-md-4">
+        <div id="home-page">
+            <div className="row justify-content-center" style={{minHeight: '300px'}}>
+                <div className="col-md-4" style={{display: 'flex', alignItems: 'center', flexWrap: 'wrap'}}>
                     <JoinRoom />
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-4">
-                    First Column
+            <div className="row" style={{minHeight: '400px'}}>
+                <div className="col-md-6">
+                    <GamesList />
                 </div>
-                <div class="col-md-4">
-                    Second Column
-                </div>
-                <div class="col-md-4">
-                    Third Column
+                <div className="col-md-6">
+                    <NewGame />
                 </div>
             </div>
         </div>
