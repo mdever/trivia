@@ -2,9 +2,18 @@
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
+const config = require('dotenv').config();
+
 
 const { Sequelize, DataTypes, Op } = require('sequelize');
-const sequelize = new Sequelize('sqlite::memory:');
+
+console.log('Attempting to connect to database with properties:');
+console.log(config);
+
+const sequelize = new Sequelize('main', config.SQLITE_USER, config.SQLITE_PASSWORD, {
+  dialect: 'sqlite',
+  storage: path.join(__dirname, '..', 'trivia.db')
+});
 const models = require('./models')(sequelize);
 
 

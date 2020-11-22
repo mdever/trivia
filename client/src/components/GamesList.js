@@ -1,4 +1,6 @@
-import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchGames } from '../redux/actions';
 
 function GameItem(props) {
     return (
@@ -10,6 +12,12 @@ function GameItem(props) {
 
 export default function GamesList() {
     const games = useSelector(state => state.games.games);
+    const user = useSelector(state => state.users.currentUser);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(fetchGames(user.id));
+    }, []);
 
     return (
         <div>

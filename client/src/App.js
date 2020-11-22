@@ -7,7 +7,7 @@ import Footer from './components/Footer/Footer';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useState } from 'react';
 import { createNewUser } from './redux/reducers/users';
 import { newUserErrorSelector, currentRoomSelector, currentUserSelector } from './redux/selectors';
@@ -53,6 +53,7 @@ function BannerImage() {
 
 function App() {
   const dispatch = useDispatch();
+  const history = useHistory();
   const room = useSelector(currentRoomSelector);
   const user = useSelector(currentUserSelector);
 
@@ -68,9 +69,9 @@ function App() {
     <div className="App">
       <Main>
         <Header />
-        <Router>
+        <Router history={history}>
           <Switch>
-            <Route path="/">
+            <Route exact path="/">
               {!user   
               ?  <NewPlayer onSubmit={(player) => submitPlayer(player) }/>
               :  <HomePage user={user} />
@@ -78,6 +79,9 @@ function App() {
             </Route>
             <Route path="/rooms/:id">
               
+            </Route>
+            <Route path="/games/:id">
+              <div>Testing games route</div>
             </Route>
           </Switch>
         </Router>

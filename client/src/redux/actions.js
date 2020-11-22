@@ -1,4 +1,4 @@
-import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE, NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR } from './actionTypes';
+import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE, NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR, FETCH_GAMES } from './actionTypes';
 
 export const createRoom = name => ({
     type: CREATE_ROOM,
@@ -25,7 +25,7 @@ export function newUserResponse(user) {
     }
 }
 
-export function createNewGame(name) {
+export function createNewGame(name, routeToGamesPage) {
     return async function(dispatch, getState) {
         const state = getState();
         const user = state.users.currentUser;
@@ -45,7 +45,9 @@ export function createNewGame(name) {
 
             res = await res.json();
 
-            dispatch(newGameSuccess(res));
+            dispatch(newGameSuccess(res))
+            
+            routeToGamesPage(res.id);
         } catch (error) {
             console.log('Error at createNewGame():', error);
             dispatch({ type: NEW_GAME_ERROR, payload: error});
@@ -55,3 +57,27 @@ export function createNewGame(name) {
     }
 }
 export const newGameSuccess = (game) => ({ type: NEW_GAME_SUCCESS, payload: game});
+
+export function fetchGames(userId) {
+    return async function(dispatch, getState) {
+        dispatch({type: FETCH_GAMES, payload: {}});
+
+        try {
+            let res = await fetch('/games?userId=' + encodeURIComponent(userId), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
+
+            res = await res.json();
+            dispatch(fetchGamesSuccess(res));
+        } catch (error) {
+            console.log('Error at fetchGames():', error);
+            dispatch(fetchGamesError(error));
+        }
+    }
+}
+
+export const fetchGamesSuccess = (games) => ({ type: FETCH_GAMES_SUCCESS, payload: games });
+export const fetchGamesError = (error) => ({ type: FETCH_GAMES_ERROR, payload: error });

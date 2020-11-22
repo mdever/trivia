@@ -1,4 +1,4 @@
-import { NEW_GAME_SUCCESS, NEW_GAME_ERROR } from "../actionTypes"
+import { NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR } from "../actionTypes"
 
 const initialState = {
     games: [],
@@ -18,6 +18,18 @@ export function gamesReducer(state = initialState, action) {
             }
         }
         case NEW_GAME_ERROR: {
+            return {
+                ...state,
+                error: action.payload
+            }
+        }
+        case FETCH_GAMES_SUCCESS: {
+            return {
+                ...state,
+                games: [ ...action.payload ]
+            }
+        }
+        case FETCH_GAMES_ERROR: {
             return {
                 ...state,
                 error: action.payload
