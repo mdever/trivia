@@ -1,8 +1,7 @@
-import * as styles from './HomePage.css';
 import * as React from 'react';
 
-import NewGame from '../../components/NewGame';
-import GamesList from '../../components/GamesList';
+import NewGame from './NewGame';
+import GamesList from './GamesList';
 
 function JoinRoom() {
     return (
