@@ -4,58 +4,21 @@ import Main from './Main.js';
 import HomePage from './components/HomePage';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import NewPlayer from './components/NewPlayer';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { useState } from 'react';
 import { createNewUser } from './redux/reducers/users';
-import { newUserErrorSelector, currentRoomSelector, currentUserSelector } from './redux/selectors';
-
-
-function NewPlayer(props) {
-  const [player, setPlayer] = useState({name: ''});
-
-
-  const error = useSelector(newUserErrorSelector);
-
-  return (
-    <div>
-      <BannerImage />
-      <div>
-        <h3>Player Name</h3>
-        <input type="text" name="name" onChange={event => setPlayer({name: event.target.value}) }/>
-        <input type="submit" onClick={() => props.onSubmit(player)} />
-      </div>
-      {error && 
-        <div>
-          <p>Sorry, something went wrong creating a user</p>
-          <p>{error.message}</p>
-        </div>
-      }
-    </div>
-  )
-}
-
-function PlayerCard(props) {
-  return (
-    <div>
-      {props.player.name}
-    </div>
-  )
-}
-
-function BannerImage() {
-  return (
-    <img src="/banner.png"></img>
-  )
-}
+import { currentRoomSelector, currentUserSelector, isLoadingSelector } from './redux/selectors';
 
 function App() {
   const dispatch = useDispatch();
   const history = useHistory();
   const room = useSelector(currentRoomSelector);
   const user = useSelector(currentUserSelector);
+  const isAppLoading = useSelector(isLoadingSelector);
 
   function submitPlayer(player) {
     dispatch(createNewUser(player.name));
@@ -65,15 +28,25 @@ function App() {
     dispatch(createNewRoom('test'));
   }
 
+  const setAppLoading = () => {
+    dispatch({ type: 'BEGIN_APP_LOADING', payload: {} });
+    return function() {
+      dispatch({type: 'END_APP_LOADING', payload: {}});
+    }
+  }
+
   return (
     <div className="App">
-      <Main>
+      <Main setAppLoading={setAppLoading}>
+        { isAppLoading &&
+          <div>App is loading</div>
+        }
         <Header />
         <Router history={history}>
           <Switch>
             <Route exact path="/">
               {!user   
-              ?  <NewPlayer onSubmit={(player) => submitPlayer(player) }/>
+              ?  <NewPlayer onSubmit={ player => submitPlayer(player) }/>
               :  <HomePage user={user} />
               }
             </Route>
