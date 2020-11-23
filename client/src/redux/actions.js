@@ -39,7 +39,7 @@ export function createNewGame(name, routeToGamesPage) {
                 },
                 body: JSON.stringify({
                     name,
-                    owner_id: user.id
+                    ownerId: user.id
                 })
             });
 
@@ -60,6 +60,11 @@ export const newGameSuccess = (game) => ({ type: NEW_GAME_SUCCESS, payload: game
 
 export function fetchGames(userId) {
     return async function(dispatch, getState) {
+
+        if (!userId) {
+            userId = getState().users.currentUser.id;
+        }
+
         dispatch({type: FETCH_GAMES, payload: {}});
 
         try {

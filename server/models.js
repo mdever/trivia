@@ -23,7 +23,7 @@ module.exports = function(sequelize) {
             type: DataTypes.STRING,
             allowNull: false
         },
-        owner_id: {
+        ownerId: {
             type: DataTypes.INTEGER,
             references: {
                 model: User,
@@ -45,7 +45,7 @@ module.exports = function(sequelize) {
         code: {
             type: DataTypes.STRING
         },
-        game_id: {
+        gameId: {
             type: DataTypes.INTEGER,
             references: {
                 model: Game,
@@ -79,10 +79,10 @@ module.exports = function(sequelize) {
             type: DataTypes.INTEGER,
             allowNull: true
         },
-        room_id: {
+        gameId: {
             type: DataTypes.INTEGER,
             references: {
-                model: Room,
+                model: Game,
                 key: 'id'
             }
         }
@@ -105,7 +105,7 @@ module.exports = function(sequelize) {
         correct: {
             type: DataTypes.BOOLEAN
         },
-        question_id: {
+        questionId: {
             type: DataTypes.INTEGER,
             references: {
                 model: Question,
@@ -122,14 +122,14 @@ module.exports = function(sequelize) {
             primaryKey: true,
             autoIncrement: true,
         },
-        user_id: {
+        userId: {
             type: DataTypes.INTEGER,
             references: {
             model: User,
             key: 'id'
             }
         },
-        room_id: {
+        roomId: {
             type: DataTypes.INTEGER,
             references: {
                 model: Room,
@@ -138,23 +138,35 @@ module.exports = function(sequelize) {
         }
     });
     
-    Question.hasMany(Answer);
-    Answer.belongsTo(Question);
+    Question.hasMany(Answer, {
+        foreignKey: 'questionId'
+    });
+    Answer.belongsTo(Question, {
+        foreignKey: 'questionId'
+    });
 
-    Question.belongsTo(Room);
-    Room.hasMany(Question);
+    Question.belongsTo(Game, {
+        foreignKey: 'gameId'
+    });
+    Room.hasMany(Question, {
+        foreignKey: 'gameId'
+    });
 
-    User.belongsToMany(Room, { through: UserSessions });
-    Room.belongsToMany(User, { through: UserSessions });
+    User.belongsToMany(Room, { through: UserSessions, foreignKey: 'userId'  });
+    Room.belongsToMany(User, { through: UserSessions, foreignKey: 'roomId' });
     
-    Room.belongsTo(Game);
-    Game.hasMany(Room);
+    Room.belongsTo(Game, {
+        foreignKey: 'gameId'
+    });
+    Game.hasMany(Room, {
+        foreignKey: 'gameId'
+    });
 
     Game.belongsTo(User, {
-        foreignKey: 'owner_id'
+        foreignKey: 'ownerId'
     });
     User.hasMany(Game, {
-        foreignKey: 'owner_id'
+        foreignKey: 'ownerId'
     });
     
 

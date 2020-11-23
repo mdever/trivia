@@ -17,6 +17,10 @@ label {
   position: relative;
 }
 
+#main {
+  min-height: 400px;
+}
+
 label {
   margin-right: 0.5rem;
 }

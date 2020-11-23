@@ -17,12 +17,123 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
 
   app.post('/rooms', async (req, res) => {
     const room = Room.build({ name: req.body.name });
-    const game = await Game.findOne({ id: req.body.game_id });
+    const game = await Game.findOne({ id: req.body.gameId });
     room.setGame(game);
     await room.save();
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.write(JSON.stringify({...room.dataValues}));
     res.end();
+  });
+
+  app.post('/questions', async (req, res) => {
+    const errorResult = new APIError();
+
+    if (!req.body.gameId) {
+      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+        name: 'gameId',
+        reason: 'not present',
+        location: 'BODY'
+      }]);
+    }
+
+    if (!req.body.questions) {
+      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT), [{
+        name: 'questions',
+        reason: 'not present',
+        location: 'BODY'
+      }]
+    }
+
+    if (!req.body.userId) {
+      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT), [{
+        name: 'userId',
+        reason: 'not present',
+        location: 'BODY'
+      }]
+    }
+
+    if (errorResult.hasErrors()) {
+      res.writeHead(400, {'Content-Type': 'application/json'});
+      res.write(errorResult.getErrorResponse());
+      res.send();
+    }
+
+    const userId = Number(req.body.userId);
+    const gameId = Number(req.body.gameId);
+
+    if (isNaN(userId)) {
+      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE), [{
+        name: 'userId',
+        reason: 'Not an integer',
+        location: 'BODY'
+      }];
+    }
+
+    if (isNaN(gameId)) {
+      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE), [{
+        name: 'gameId',
+        reason: 'Not an integer',
+        location: 'BODY'
+      }];
+    }
+
+    if (errorResult.hasErrors()) {
+      res.writeHead(400, {'Content-Type': 'application/json'});
+      res.write(errorResult.getErrorResponse());
+      res.send();
+    }
+
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      errorResult.addValidationErrors(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
+        name: 'userId',
+        value: req.body.userId,
+        reason: 'User not found'
+      }]);
+    }
+
+    const game = await User.findByPk(gameId);
+
+    if (!game) {
+      errorResult.addValidationErrors(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
+        name: 'gameId',
+        value: req.body.gameId,
+        reason: 'Game not found'
+      }]);
+    }
+
+    if (errorResult.hasErrors()) {
+      res.writeHead(404, {'Content-Type': 'application/json'});
+      res.write(errorResult.getErrorResponse());
+      res.send();
+    }
+
+    for (let question of req.body.questions) {
+      const question = Question.build({
+        question: question.question,
+        hint: question.hint,
+        index: question.index
+      })
+
+      await question.setUser(user);
+      await question.setGame(game);
+      await question.save();
+
+      for (let answer of question.answers) {
+        const answer = Answer.build({
+          answer: answer.answer,
+          index: answer.index,
+          correct: answer.correct
+        })
+
+        await answer.setQuestion(question)
+        await answer.save();
+      }
+    }
+
+
+
   });
 
   app.post('/games', async (req, res) => {
@@ -34,9 +145,9 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         }]);
     }
 
-    if (!req.body.owner_id) {
+    if (!req.body.ownerId) {
         errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
-            name: 'owner_id',
+            name: 'ownerId',
             reason: 'not present',
             location: 'BODY'
         }])
@@ -49,12 +160,12 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         return;
     }
 
-    const user = await User.findByPk(req.body.owner_id);
+    const user = await User.findByPk(req.body.ownerId);
 
     if (!user) {
         errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
-            name: 'owner_id',
-            value: req.body.user_id,
+            name: 'ownerId',
+            value: req.body.userId,
             reason: 'User not found'
         }])
     }

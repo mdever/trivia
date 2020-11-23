@@ -5,6 +5,7 @@ import HomePage from './components/HomePage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import NewPlayer from './components/NewPlayer';
+import EditGame from './components/EditGame';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
@@ -42,22 +43,24 @@ function App() {
           <div>App is loading</div>
         }
         <Header />
-        <Router history={history}>
-          <Switch>
-            <Route exact path="/">
-              {!user   
-              ?  <NewPlayer onSubmit={ player => submitPlayer(player) }/>
-              :  <HomePage user={user} />
-              }
-            </Route>
-            <Route path="/rooms/:id">
-              
-            </Route>
-            <Route path="/games/:id">
-              <div>Testing games route</div>
-            </Route>
-          </Switch>
-        </Router>
+        <div id="main">
+          <Router history={history}>
+            <Switch>
+              <Route exact path="/">
+                {!user   
+                ?  <NewPlayer onSubmit={ player => submitPlayer(player) }/>
+                :  <HomePage user={user} />
+                }
+              </Route>
+              <Route path="/rooms/:id">
+                
+              </Route>
+              <Route path="/games/:id">
+                <EditGame />
+              </Route>
+            </Switch>
+          </Router>
+        </div>
         <Footer />
       </Main>
 

@@ -6,13 +6,23 @@ import { gamesReducer } from './games';
 import { apiReducer } from './api';
 import { BEGIN_APP_LOADING, END_APP_LOADING } from '../actionTypes';
 
-const isLoadingReducer = (state = false, action) => {
+const isLoadingReducer = (state = { isLoading: false, loadingCount: 0 }, action) => {
     switch (action.type) {
         case BEGIN_APP_LOADING: {
-            return true
+            const newLoadingCount = state.loadingCount + 1;
+            return {
+                ...state,
+                loadingCount: newLoadingCount,
+                isLoading: newLoadingCount > 0 ? true : false
+            }
         }
         case END_APP_LOADING: {
-            return false;
+            const newLoadingCount = state.loadingCount - 1;
+            return {
+                ...state,
+                isLoading: newLoadingCount === 0 ? false : true,
+                loadingCount: newLoadingCount,
+            }
         }
         default: {
             return state

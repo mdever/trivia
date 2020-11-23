@@ -1,11 +1,10 @@
-import './Main.css';
 import AppLoadingContext from './context/AppLoadingContext';
 
 
 export default function(props) {
     return (
         <AppLoadingContext.Provider value={props.setAppLoading}>
-            <div id="main" className="container">
+            <div style={{minHeight: '600px'}} className="container">
                 { props.children }
             </div>
         </AppLoadingContext.Provider>
