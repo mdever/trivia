@@ -23,12 +23,12 @@ function addQuestion(gameId) {
 export default function EditGame(props) {
     let { id } = useParams();
     let game = useSelector(selectGame(id));
-    let user = useSelector(currentUserSelector());
+    let user = useSelector(currentUserSelector);
     const dispatch = useDispatch();
 
     useEffect(() => {
         if (!game) {
-            dispatch(fetchGames({includeQuestions: true}));
+            dispatch(fetchGames(user.id, {includeQuestions: true}));
         }
     }, [id]);
 
