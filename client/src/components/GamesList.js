@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchGames } from '../redux/actions';
 
 function GameItem(props) {
     return (
-        <div>
-            <p>{props.game.name}</p>
+        <div class="card">
+            <div class="card-body">
+                <Link to={'/games/' + props.game.id}>{props.game.name}</Link>
+            </div>
         </div>
     )
 }

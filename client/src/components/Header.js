@@ -1,5 +1,6 @@
 const headerStyle = {
-    paddingTop: '3rem'
+    paddingTop: '2rem',
+    paddingBottom: '1rem'
 }
 
 export default function Header() {
@@ -7,7 +8,7 @@ export default function Header() {
         <header style={headerStyle}>
             <div className="row">
                 <div className="col-sm">
-                    <h3>Trivia</h3>
+                    <h1>Trivia</h1>
                 </div>
             </div>
         </header>

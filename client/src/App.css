@@ -17,6 +17,11 @@ label {
   position: relative;
 }
 
+ul {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
 #main {
   min-height: 400px;
 }
@@ -32,4 +37,8 @@ input {
 
 .full-width {
   width: 100%;
-} 
+}
+
+.justify-text {
+  text-align: justify;
+}

@@ -19,16 +19,18 @@ export default function HomePage(props) {
 
     return (
         <div id="home-page">
-            <div className="row justify-content-center" style={{minHeight: '300px'}}>
-                <div className="col-md-4" style={{display: 'flex', alignItems: 'center', flexWrap: 'wrap'}}>
+            <div className="row justify-content-center" style={{minHeight: '300px', paddingTop: '3rem'}}>
+                <div className="col-md-4">
                     <JoinRoom />
                 </div>
             </div>
-            <div className="row" style={{minHeight: '400px'}}>
-                <div className="col-md-6">
+            <div className="row" style={{minHeight: '300px'}}>
+                <div className="col-md-6 justify-text">
+                    <h3>My Games</h3>
                     <GamesList />
                 </div>
                 <div className="col-md-6">
+                    <h3>New Game</h3>
                     <NewGame />
                 </div>
             </div>
