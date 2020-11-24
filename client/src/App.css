@@ -1,9 +1,5 @@
 @import "~bootstrap/dist/css/bootstrap";
 
-#root { 
-  padding-top: 2rem;
-}
-
 label {
   margin-bottom: 0;
 }

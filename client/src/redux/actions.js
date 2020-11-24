@@ -58,7 +58,7 @@ export function createNewGame(name, routeToGamesPage) {
 }
 export const newGameSuccess = (game) => ({ type: NEW_GAME_SUCCESS, payload: game});
 
-export function fetchGames(userId) {
+export function fetchGames(userId, options = {}) {
     return async function(dispatch, getState) {
 
         if (!userId) {
@@ -67,8 +67,13 @@ export function fetchGames(userId) {
 
         dispatch({type: FETCH_GAMES, payload: {}});
 
+        let url = '/games?userId=' + encodeURIComponent(userId);
+        if (options.includeQuestions) {
+            url += '&includeQuestions';
+        }
+
         try {
-            let res = await fetch('/games?userId=' + encodeURIComponent(userId), {
+            let res = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
