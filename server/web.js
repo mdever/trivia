@@ -93,7 +93,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       }]);
     }
 
-    const game = await User.findByPk(gameId);
+    const game = await Game.findByPk(gameId);
 
     if (!game) {
       errorResult.addValidationErrors(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
@@ -109,28 +109,44 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       res.send();
     }
 
-    for (let question of req.body.questions) {
+    for (let q of req.body.questions) {
       const question = Question.build({
-        question: question.question,
-        hint: question.hint,
-        index: question.index
+        question: q.question,
+        hint: q.hint,
+        index: q.index
       })
 
-      await question.setUser(user);
-      await question.setGame(game);
-      await question.save();
+      try {
+        await question.save();
+        await game.addQuestion(question);
+      } catch (error) {
+        console.log('Error assigning question to game');
+        console.log(error);
+      }
 
-      for (let answer of question.answers) {
+      for (let a of q.answers) {
         const answer = Answer.build({
-          answer: answer.answer,
-          index: answer.index,
-          correct: answer.correct
+          answer: a.answer,
+          index: a.index,
+          correct: a.correct
         })
 
-        await answer.setQuestion(question)
-        await answer.save();
+        try {
+          await answer.save();
+          await question.addAnswer(answer);
+        } catch (error) {
+          console.log('Error assigning answer to question');
+          console.log(error);
+        }
       }
     }
+
+    questions = await Question.findAll({where: { gameId: game.id }, include: Answer});
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write(JSON.stringify([...questions]));
+    res.end();
+
+    return;
   });
 
   app.get('/questions', async (req, res) => {
@@ -153,9 +169,9 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       }]);
     }
 
-    if (errorResult.hasErrors()) {
+    if (errorResponse.hasErrors()) {
       res.writeHead(400, {'Content-Type': 'application/json'});
-      res.write(errorResult.getErrorResponse());
+      res.write(errorResponse.getErrorResponse());
       res.send();
       
       return;
@@ -180,9 +196,9 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       }]);
     }
 
-    if (errorResult.hasErrors()) {
+    if (errorResponse.hasErrors()) {
       res.writeHead(400, {'Content-Type': 'application/json'});
-      res.write(errorResult.getErrorResponse());
+      res.write(errorResponse.getErrorResponse());
       res.send();
       
       return;
@@ -229,9 +245,12 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       return;
     }
 
-    const questions = await game.getQuestions({include: Answer});
+    const questions = await Question.findAll({ where: { gameId: game.id }, include: Answer })
     res.writeHead(200, {'Content-Type': 'application/json'});
     res.write(JSON.stringify([...questions]));
+    res.end();
+
+    return;
 
   });
 

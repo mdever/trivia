@@ -141,30 +141,18 @@ module.exports = function(sequelize) {
     Question.hasMany(Answer, {
         foreignKey: 'questionId'
     });
-    Answer.belongsTo(Question, {
-        foreignKey: 'questionId'
-    });
 
-    Question.belongsTo(Game, {
-        foreignKey: 'gameId'
-    });
-    Room.hasMany(Question, {
+    Game.hasMany(Question, {
         foreignKey: 'gameId'
     });
 
     User.belongsToMany(Room, { through: UserSessions, foreignKey: 'userId'  });
     Room.belongsToMany(User, { through: UserSessions, foreignKey: 'roomId' });
     
-    Room.belongsTo(Game, {
-        foreignKey: 'gameId'
-    });
     Game.hasMany(Room, {
         foreignKey: 'gameId'
     });
 
-    Game.belongsTo(User, {
-        foreignKey: 'ownerId'
-    });
     User.hasMany(Game, {
         foreignKey: 'ownerId'
     });
