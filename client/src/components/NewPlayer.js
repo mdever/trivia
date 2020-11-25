@@ -9,7 +9,8 @@ function BannerImage() {
 }
 
 export default function NewPlayer(props) {
-    const [player, setPlayer] = useState({name: ''});
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
 
     const error = useSelector(newUserErrorSelector);
   
@@ -18,8 +19,9 @@ export default function NewPlayer(props) {
         <BannerImage />
         <div>
           <h3>Player Name</h3>
-          <input type="text" name="name" onChange={event => setPlayer({name: event.target.value}) }/>
-          <input type="submit" onClick={() => props.onSubmit(player)} />
+          <input type="text" name="username" onChange={event => setUsername(event.target.value) }/>
+          <input type="text" name="password" onChange={event => setPassword(event.target.value)} />
+          <input type="submit" onClick={() => props.onSubmit({username, password})} />
         </div>
         {error && 
           <div>

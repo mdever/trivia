@@ -4,12 +4,58 @@ const bcrypt = require('bcrypt');
 
 module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game, AuthToken}) {
 
+  async function checkUser(req, res, next) {
+    const errorResponse = new APIError();
+
+    let authToken = req.headers.authorization;
+    if (!authToken) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.AUTHORIZATION_MISSING, 'Authorization header not present');
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+  
+      return;
+    }
+    authToken = authToken.slice(7);
+    authToken = await AuthToken.findOne({where: { value: authToken }});
+  
+    if (!authToken) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.SESSION_NOT_FOUND, "No session found for Bearer token")
+    }
+  
+    if (errorResponse.hasErrors()) {
+        res.writeHead(401, {'Content-Type': 'application/json'})
+        res.write(JSON.stringify(errorResponse));
+        res.end();
+        return;
+    }
+  
+  
+    const user = await User.findOne({ where: { id: authToken.userId } })
+  
+    if (!user) {
+        errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.USER_NOT_FOUND, "No user found for Bearer token")
+    }
+  
+    if (errorResponse.hasErrors()) {
+        res.writeHead(401, {'Content-Type': 'application/json'})
+        res.write(JSON.stringify(errorResponse));
+        res.end();
+        return;
+    }
+  
+    req.user = user;
+  
+    next();
+  }
+
+
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
   });
 
   app.post('/users', async (req, res) => {
-    const {name, password} = req.body;
+    const {username, password} = req.body;
     
     bcrypt.genSalt(10, async (err1, salt) => {
 
@@ -25,13 +71,13 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
 
         if (err2) {
           res.writeHead(500, {'Content-Type': 'application/json'});
-          res.write(JSON.stringify({type: 'CRYPTO_ERROR', message: 'Failure to generate salt', detail: JSON.stringify(err2)}));
+          res.write(JSON.stringify({type: 'CRYPTO_ERROR', message: 'Failure to hash password', detail: JSON.stringify(err2)}));
           res.end();
           
           return;
         }  
 
-        const user = User.build({ name, salt, pwHash });
+        const user = User.build({ username, salt, pwHash });
         await user.save();
 
         const token = crypto.randomBytes(48).toString('hex');
@@ -51,9 +97,9 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
   })
 
   app.post('/tokens', async (req, res) => {
-    const { name, password } = req.body;
+    const { username, password } = req.body;
 
-    const user = await User.findOne({ where: { name } });
+    const user = await User.findOne({ where: { username } });
     const match = await bcrypt.compare(password, user.pwHash);
     if (match) {
 
@@ -80,6 +126,38 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
     }
   });
 
+  app.delete('/tokens', async (req, res) => {
+    const errorResponse = new APIError();
+
+    let authToken = req.headers.authorization;
+    if (!authToken) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.AUTHORIZATION_MISSING, 'Authorization header not present');
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+
+      return;
+    }
+    authToken = authToken.slice(7);
+    authToken = await AuthToken.findOne({where: { value: authToken }});
+
+    if (!authToken) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.SESSION_NOT_FOUND, "No session found for Bearer token")
+    }
+
+    if (errorResponse.hasErrors()) {
+        res.writeHead(401, {'Content-Type': 'application/json'})
+        res.write(JSON.stringify(errorResponse));
+        res.end();
+        return;
+    }
+
+    await authToken.destroy();
+
+    res.writeHead(200);
+    res.end();
+  });
+
   app.post('/rooms', async (req, res) => {
     const room = Room.build({ name: req.body.name });
     const game = await Game.findOne({ id: req.body.gameId });
@@ -90,7 +168,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
     res.end();
   });
 
-  app.post('/questions', async (req, res) => {
+  app.post('/questions', checkUser, async (req, res) => {
     const errorResult = new APIError();
 
     if (!req.body.gameId) {
@@ -109,30 +187,13 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       }]
     }
 
-    if (!req.body.userId) {
-      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT), [{
-        name: 'userId',
-        reason: 'not present',
-        location: 'BODY'
-      }]
-    }
-
     if (errorResult.hasErrors()) {
       res.writeHead(400, {'Content-Type': 'application/json'});
       res.write(errorResult.getErrorResponse());
       res.send();
     }
 
-    const userId = Number(req.body.userId);
     const gameId = Number(req.body.gameId);
-
-    if (isNaN(userId)) {
-      errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE), [{
-        name: 'userId',
-        reason: 'Not an integer',
-        location: 'BODY'
-      }];
-    }
 
     if (isNaN(gameId)) {
       errorResult.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE), [{
@@ -148,15 +209,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       res.send();
     }
 
-    const user = await User.findByPk(userId);
-
-    if (!user) {
-      errorResult.addValidationErrors(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
-        name: 'userId',
-        value: req.body.userId,
-        reason: 'User not found'
-      }]);
-    }
+    const user = req.user;
 
     const game = await Game.findByPk(gameId);
 
@@ -172,6 +225,16 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       res.writeHead(404, {'Content-Type': 'application/json'});
       res.write(errorResult.getErrorResponse());
       res.send();
+    }
+
+    if (game.ownerId != user.id) {
+      errorResult.addAuthorizationError(ErrorSubTypes.AUTHORIZATION_ERROR.ACCESS_TO_RESOURCE_DENIED, 
+        'Attempting to modify a game which is not owned by the authenticated user');
+      res.writeHead(401, {'Content-Type': 'application/json'});
+      res.write(errorResult.getErrorResponse());
+      res.end();
+      
+      return;
     }
 
     for (let q of req.body.questions) {
@@ -319,7 +382,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
 
   });
 
-  app.post('/games', async (req, res) => {
+  app.post('/games', checkUser, async (req, res) => {
     const errorResponse = new APIError();
 
     if (!req.body.name) {
@@ -335,51 +398,15 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         return;
     }
 
-    let authToken = req.headers.authorization;
-    if (!authToken) {
-      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.AUTHORIZATION_MISSING, 'Authorization header not present');
-      res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.write(errorResponse.getErrorResponse());
-      res.end();
-
-      return;
-    }
-    authToken = authToken.slice(7);
-    authToken = await AuthToken.findOne({where: { value: authToken }});
-
-    if (!authToken) {
-      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.NO_SESSION_FOUND, "No session found for Bearer token")
-    }
-
-    if (errorResponse.hasErrors()) {
-        res.writeHead(401, {'Content-Type': 'application/json'})
-        res.write(JSON.stringify(errorResponse));
-        res.end();
-        return;
-    }
-
-
-    const user = await User.findOne({ where: { id: authToken.userId } })
-
-    if (!user) {
-        errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.NO_SESSION_FOUND, "No session found for Bearer token")
-    }
-
-    if (errorResponse.hasErrors()) {
-        res.writeHead(401, {'Content-Type': 'application/json'})
-        res.write(JSON.stringify(errorResponse));
-        res.end();
-        return;
-    }
+    const user = req.user;
 
     const game = Game.build({
       name: req.body.name
     })
 
-    user.addGame(game);
-
     try {
         await game.save();
+        await user.addGame(game);
     } catch (error) {
         console.log('Error on game.save()');
         console.log(error);
@@ -390,52 +417,10 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
   });
 
   
-  app.get('/games', async (req, res) => {
-      const errorResponse = {
-          errors: []
-      }
-      
-      console.log(req.query);
+  app.get('/games', checkUser, async (req, res) => {
+      const errorResponse = new APIError()
 
-      if (!req.query.userId) {
-          errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
-              name: 'userId',
-              reason: 'Not Present',
-              location: 'QUERY'
-          }]);
-      }
-
-      if (isNaN(Number(req.query.userId))) {
-          errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
-              name: 'userId',
-              reason: 'Not an integer',
-              location: 'QUERY'
-          }]);
-      }
-
-      if (errorResponse.errors.length > 0) {
-          res.writeHead(400, {'Content-Type': 'application/json'});
-          res.write(JSON.stringify(errorResponse));
-          res.end();
-          return;
-      }
-
-      const user = await User.findByPk(Number(req.query.userId));
-      if (!user) {
-          errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
-              name: 'userId',
-              value: userId,
-              reason: 'User could not be found'
-          }]);
-      }
-
-      if (errorResponse.errors.length > 0) {
-          res.writeHead(404, {'Content-Type': 'application/json'});
-          res.write(JSON.stringify(errorResponse));
-          res.end();
-          return;
-      }
-
+      const user = req.user;
       const games = await user.getGames();
 
       res.writeHead(200, {'Content-Type': 'application/json'});

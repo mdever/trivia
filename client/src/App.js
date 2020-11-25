@@ -22,7 +22,7 @@ function App() {
   const isAppLoading = useSelector(isLoadingSelector);
 
   function submitPlayer(player) {
-    dispatch(createNewUser(player.name));
+    dispatch(createNewUser(player));
   }
 
   function createRoom() {

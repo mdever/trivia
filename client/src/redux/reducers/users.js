@@ -32,19 +32,19 @@ export function userReducer(state = initialState, action) {
     }
 }
 
-export function createNewUser(name) {
+export function createNewUser({username, password}) {
     return async function(dispatch, getState) {
         try {
-            const res = await fetch('/users', {
+            let res = await fetch('/users', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ username, password })
             });
 
-            const json = await res.json();
-            localStorage.setItem('user', JSON.stringify(json));
+            res = await res.json();
+            localStorage.setItem('token', res.token);
             dispatch(newUserResponse(json));
         } catch (error) {
             console.log('NEW_USER_ERROR:', error);
