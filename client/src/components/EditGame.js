@@ -7,11 +7,24 @@ import { fetchGames, fetchQuestionsForGame } from '../redux/actions';
 
 export function EditQuestion(props) {
 
+    const idx = props.idx;
+
     return (
-        <div>
-            <p>{props.question.id}</p>
-            <p>{props.question.question}</p>
-            <p>{props.question.hint}</p>
+
+        <div className="card">
+            <div className="card-header" id={'heading_' + idx}>
+                <h2 className="mb-0">
+                    <button className="btn btn-link" onClick={() => document.querySelector('#question_' + idx).classList.toggle('show') } type="button" data-toggle="collapse" data-target={'#question_' + idx} aria-expanded="true" aria-controls={'question_' + props.question.idx}>
+                        {props.question.question}
+                    </button>
+                </h2>
+            </div>
+
+            <div id={'question_' + idx} className="collapse" aria-labelledby={'heading_' + idx} data-parent="#questions-list">
+                <div className="card-body">
+                    Hint: {props.question.hint}
+                </div>
+            </div>
         </div>
     )
 }
@@ -45,17 +58,13 @@ export default function EditGame(props) {
             }
             { game &&
                 <div>
-                    <form>
-                        <ul>
-                            { 
-                                questions.map(question => 
-                                    <li>
-                                        <EditQuestion question={question} addQuestion={addQuestion(id)} />
-                                    </li>
-                                )
-                            }
-                        </ul>
-                    </form>
+                    <div className="accordion" id="questions-list">
+                        { 
+                            questions.map((question, idx) => 
+                                <EditQuestion question={question} key={idx} idx={idx} addQuestion={addQuestion(id)} />
+                            )
+                        }
+                    </div>
                 </div>
             }
         </div>
