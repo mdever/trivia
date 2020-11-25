@@ -1,19 +1,84 @@
 let { APIError, ErrorSubTypes } = require('./api-errors');
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
-module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game}) {
+module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game, AuthToken}) {
 
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
   });
 
   app.post('/users', async (req, res) => {
-    console.log('Received request to create new user: ' + req.body.name);
-    const user = User.build({ name: req.body.name });
-    await user.save();
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.write(JSON.stringify({...user.dataValues}));
-    res.end();
+    const {name, password} = req.body;
+    
+    bcrypt.genSalt(10, async (err1, salt) => {
+
+      if (err1) {
+        res.writeHead(500, {'Content-Type': 'application/json'});
+        res.write(JSON.stringify({type: 'CRYPTO_ERROR', message: 'Failure to generate salt', detail: JSON.stringify(err1)}));
+        res.end();
+        
+        return;
+      }
+
+      bcrypt.hash(password, salt, async (err2, pwHash) => {
+
+        if (err2) {
+          res.writeHead(500, {'Content-Type': 'application/json'});
+          res.write(JSON.stringify({type: 'CRYPTO_ERROR', message: 'Failure to generate salt', detail: JSON.stringify(err2)}));
+          res.end();
+          
+          return;
+        }  
+
+        const user = User.build({ name, salt, pwHash });
+        await user.save();
+
+        const token = crypto.randomBytes(48).toString('hex');
+
+        const authToken = AuthToken.build({
+          value: token
+        })
+
+        await authToken.save();
+        await user.setAuthToken(authToken);
+
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.write(JSON.stringify({ token }));
+        res.end();
+      });
+    });
   })
+
+  app.post('/tokens', async (req, res) => {
+    const { name, password } = req.body;
+
+    const user = await User.findOne({ where: { name } });
+    const match = await bcrypt.compare(password, user.pwHash);
+    if (match) {
+
+      let existingSessions = AuthToken.findAll({where: { userId: user.id }});
+      for (let i = 0; i++; i < existingSessions.length) {
+        await existingSessions[i].destroy();
+      }
+
+      const token = crypto.randomBytes(48).toString('hex');
+      authToken = AuthToken.build({
+        value: token
+      });
+
+      await authToken.save();
+      await user.setAuthToken(authToken);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.write(JSON.stringify({ token: token }));
+      res.end();
+
+    } else {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.write(JSON.stringify({type: 'AUTHENTICATION_ERROR', message: 'Could not validate username/password'}));
+      res.end();
+    }
+  });
 
   app.post('/rooms', async (req, res) => {
     const room = Room.build({ name: req.body.name });
@@ -263,14 +328,6 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         }]);
     }
 
-    if (!req.body.ownerId) {
-        errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
-            name: 'ownerId',
-            reason: 'not present',
-            location: 'BODY'
-        }])
-    }
-
     if (errorResponse.hasErrors()) {
         res.writeHead(400, {'Content-Type': 'application/json'});
         res.write(errorResponse.getErrorResponse())
@@ -278,18 +335,38 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         return;
     }
 
-    const user = await User.findByPk(req.body.ownerId);
+    let authToken = req.headers.authorization;
+    if (!authToken) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.AUTHORIZATION_MISSING, 'Authorization header not present');
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.write(errorResponse.getErrorResponse());
+      res.end();
 
-    if (!user) {
-        errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
-            name: 'ownerId',
-            value: req.body.userId,
-            reason: 'User not found'
-        }])
+      return;
+    }
+    authToken = authToken.slice(7);
+    authToken = await AuthToken.findOne({where: { value: authToken }});
+
+    if (!authToken) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.NO_SESSION_FOUND, "No session found for Bearer token")
     }
 
     if (errorResponse.hasErrors()) {
-        res.writeHead(400, {'Content-Type': 'application/json'})
+        res.writeHead(401, {'Content-Type': 'application/json'})
+        res.write(JSON.stringify(errorResponse));
+        res.end();
+        return;
+    }
+
+
+    const user = await User.findOne({ where: { id: authToken.userId } })
+
+    if (!user) {
+        errorResponse.addAuthenticationError(ErrorSubTypes.AUTHENTICATION_ERROR.NO_SESSION_FOUND, "No session found for Bearer token")
+    }
+
+    if (errorResponse.hasErrors()) {
+        res.writeHead(401, {'Content-Type': 'application/json'})
         res.write(JSON.stringify(errorResponse));
         res.end();
         return;
@@ -299,7 +376,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       name: req.body.name
     })
 
-    game.setUser(user);
+    user.addGame(game);
 
     try {
         await game.save();

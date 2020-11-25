@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes, NOW } = require('sequelize');
 
 module.exports = function(sequelize) {
     const User = sequelize.define('User', {
@@ -9,9 +9,42 @@ module.exports = function(sequelize) {
         },
         name: {
             type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
+        },
+        salt: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        pwHash: {
+            type: DataTypes.STRING,
             allowNull: false
         }
     });
+
+    const AuthToken = sequelize.define('AuthToken', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        value: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
+        },
+        loggedInAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: User,
+                key: 'id'
+            }
+        }
+    })
 
     const Game = sequelize.define('Game', {
         id: {
@@ -137,6 +170,8 @@ module.exports = function(sequelize) {
             }
         }
     });
+
+    User.hasOne(AuthToken, { foreignKey: 'userId' });
     
     Question.hasMany(Answer, {
         foreignKey: 'questionId'
@@ -160,6 +195,7 @@ module.exports = function(sequelize) {
 
     return {
         User,
+        AuthToken,
         Room,
         Game,
         UserSessions,

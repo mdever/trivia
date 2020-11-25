@@ -2,7 +2,9 @@
 const ErrorTypes = {
     VALIDATION_ERROR: 'VALIDATION_ERROR',
     INVALID_REFERENCE_ERROR: 'INVALID_REFERENCE_ERROR',
-    SERVER_ERROR: 'SERVER_ERROR'
+    SERVER_ERROR: 'SERVER_ERROR',
+    AUTHENTICATION_ERROR: 'AUTHENTICATION_ERROR',
+    AUTHORIZATION_ERROR: 'AUTHORIZATION_ERROR'
 };
 
 const ErrorSubTypes = {
@@ -15,6 +17,13 @@ const ErrorSubTypes = {
     },
     SERVER_ERROR: {
         
+    },
+    AUTHENTICATION_ERROR: {
+        AUTHORIZATION_MISSING: 'AUTHORIZATION_HEADER_MISSING',
+        NO_SESSION_FOUND: 'NO_SESSION_FOUND'
+    },
+    AUTHORIZATION_ERROR: {
+
     }
 };
 
@@ -60,6 +69,32 @@ module.exports.APIError = class APIError {
                 ]
             })
         }
+    }
+
+    addAuthenticationError(subType, reason) {
+        this.errors.push({
+            type: ErrorTypes.AUTHENTICATION_ERROR,
+            title: subType,
+            authorizationErrors: [
+                {
+                    reason: reason
+                }
+            ]
+
+        })
+    }
+
+    addAuthorizationError(subType, reason) {
+        this.errors.push({
+            type: ErrorTypes.AUTHORIZATION_ERROR,
+            title: subType,
+            authorizationErrors: [
+                {
+                    reason: reason
+                }
+            ]
+
+        })
     }
 
     getErrorResponse() {
