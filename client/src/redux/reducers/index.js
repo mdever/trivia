@@ -3,6 +3,8 @@ import { combineReducers } from 'redux';
 import { roomsReducer } from './rooms';
 import { userReducer } from './users';
 import { gamesReducer } from './games';
+import { questionsReducer } from './questions';
+import { answersReducer } from './answers';
 import { apiReducer } from './api';
 import { BEGIN_APP_LOADING, END_APP_LOADING } from '../actionTypes';
 
@@ -34,6 +36,8 @@ const rootReducer = combineReducers({
     rooms: roomsReducer,
     users: userReducer,
     games: gamesReducer,
+    questions: questionsReducer,
+    answers: answersReducer,
     api: apiReducer,
     loading: isLoadingReducer
 })

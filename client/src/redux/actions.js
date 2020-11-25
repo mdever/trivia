@@ -1,4 +1,4 @@
-import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE, NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR, FETCH_GAMES } from './actionTypes';
+import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE, NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS } from './actionTypes';
 
 export const createRoom = name => ({
     type: CREATE_ROOM,
@@ -86,6 +86,18 @@ export function fetchGames(userId, options = {}) {
             console.log('Error at fetchGames():', error);
             dispatch(fetchGamesError(error));
         }
+    }
+}
+
+export function fetchQuestionsForGame(gameId) {
+    return async function(dispatch, getState) {
+        const userId = getState().users.currentUser.id;
+
+        let res = await fetch(`/questions?userId=${userId}&gameId=${gameId}`);
+
+        res = await res.json();
+
+        dispatch({type: FETCH_QUESTIONS_SUCCESS, questions: res});
     }
 }
 

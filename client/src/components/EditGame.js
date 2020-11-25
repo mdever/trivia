@@ -2,14 +2,16 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { selectGame, currentUserSelector } from '../redux/selectors';
-import { fetchGames } from '../redux/actions';
+import { selectGame, currentUserSelector, selectQuestionsForGame } from '../redux/selectors';
+import { fetchGames, fetchQuestionsForGame } from '../redux/actions';
 
 export function EditQuestion(props) {
 
     return (
         <div>
-            <p>Edit Question</p>    
+            <p>{props.question.id}</p>
+            <p>{props.question.question}</p>
+            <p>{props.question.hint}</p>
         </div>
     )
 }
@@ -24,11 +26,13 @@ export default function EditGame(props) {
     let { id } = useParams();
     let game = useSelector(selectGame(id));
     let user = useSelector(currentUserSelector);
+    let questions = useSelector(selectQuestionsForGame(id));
     const dispatch = useDispatch();
 
     useEffect(() => {
         if (!game) {
             dispatch(fetchGames(user.id, {includeQuestions: true}));
+            dispatch(fetchQuestionsForGame(id));
         }
     }, [id]);
 
@@ -44,9 +48,9 @@ export default function EditGame(props) {
                     <form>
                         <ul>
                             { 
-                                props.game.questions.map(question => 
+                                questions.map(question => 
                                     <li>
-                                        <EditQuestion question={question} addQuestion={addQuestion(props.game.id)} />
+                                        <EditQuestion question={question} addQuestion={addQuestion(id)} />
                                     </li>
                                 )
                             }

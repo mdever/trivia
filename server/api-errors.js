@@ -1,23 +1,27 @@
-module.exports = {
-    ErrorTypes: {
-        VALIDATION_ERROR: 'VALIDATION_ERROR',
-        INVALID_REFERENCE_ERROR: 'INVALID_REFERENCE_ERROR',
-        SERVER_ERROR: 'SERVER_ERROR'
-    },
-    ErrorSubTypes: {
-        VALIDATION_ERROR: {
-            PARAMETER_NOT_PRESENT: 'PARAMETER_NOT_PRESENT',
-            INVALID_TYPE: 'INVALID_TYPE'  
-        },
-        INVALID_REFERENCE_ERROR: {
-            ENTITY_NOT_FOUND: 'ENTITY_NOT_FOUND'
-        },
-        SERVER_ERROR: {
-            
-        }
-    }
-}
 
+const ErrorTypes = {
+    VALIDATION_ERROR: 'VALIDATION_ERROR',
+    INVALID_REFERENCE_ERROR: 'INVALID_REFERENCE_ERROR',
+    SERVER_ERROR: 'SERVER_ERROR'
+};
+
+const ErrorSubTypes = {
+    VALIDATION_ERROR: {
+        PARAMETER_NOT_PRESENT: 'PARAMETER_NOT_PRESENT',
+        INVALID_TYPE: 'INVALID_TYPE'  
+    },
+    INVALID_REFERENCE_ERROR: {
+        ENTITY_NOT_FOUND: 'ENTITY_NOT_FOUND'
+    },
+    SERVER_ERROR: {
+        
+    }
+};
+
+module.exports = {
+    ErrorTypes,
+    ErrorSubTypes
+}
 
 module.exports.APIError = class APIError {
     constructor() {
