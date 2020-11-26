@@ -35,6 +35,10 @@ function addQuestion(gameId) {
     }
 }
 
+function newQuestion() {
+
+}
+
 export default function EditGame(props) {
     let { id } = useParams();
     let game = useSelector(selectGame(id));
@@ -51,22 +55,28 @@ export default function EditGame(props) {
 
     return (
         <div>
+            <h3>{game.name}</h3>
+            <h5>Questions</h5>
             { !game &&
-                <div>
-                    Could not find game with ID {id}
-                </div>
+            <div>
+                Could not find game with ID {id}
+            </div>
             }
             { game &&
-                <div>
-                    <div className="accordion" id="questions-list">
-                        { 
-                            questions.map((question, idx) => 
-                                <EditQuestion question={question} key={idx} idx={idx} addQuestion={addQuestion(id)} />
-                            )
-                        }
-                    </div>
+            <div>
+                <div className="accordion" id="questions-list">
+                    { 
+                        questions.map((question, idx) => 
+                            <EditQuestion question={question} key={idx} idx={idx} addQuestion={addQuestion(id)} />
+                        )
+                    }
                 </div>
+            </div>
             }
+            <div>
+                <button className="btn btn-primary" onClick={newQuestion}>Create</button>
+            </div>
+            
         </div>
     )
 }
