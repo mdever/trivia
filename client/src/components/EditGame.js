@@ -44,7 +44,7 @@ export default function EditGame(props) {
 
     useEffect(() => {
         if (!game) {
-            dispatch(fetchGames(user.id, {includeQuestions: true}));
+            dispatch(fetchGames({includeQuestions: true}));
             dispatch(fetchQuestionsForGame(id));
         }
     }, [id]);
