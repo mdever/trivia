@@ -17,11 +17,13 @@ export default function NewPlayer(props) {
     return (
       <div>
         <BannerImage />
-        <div>
-          <h3>Player Name</h3>
-          <input type="text" name="username" onChange={event => setUsername(event.target.value) }/>
-          <input type="text" name="password" onChange={event => setPassword(event.target.value)} />
-          <input type="submit" onClick={() => props.onSubmit({username, password})} />
+        <div style={{marginTop: '1rem'}}>
+          <h3>New Player</h3>
+          <label htmlFor="username">Username</label>
+          <input type="text" id="username" name="username" onChange={event => setUsername(event.target.value) }/>
+          <label htmlFor="password">Password</label>
+          <input type="text" id="password" name="password" onChange={event => setPassword(event.target.value)} />
+          <input className="btn btn-primary" type="submit" onClick={() => props.onCreateUser({username, password})} value="Create" />
         </div>
         {error && 
           <div>

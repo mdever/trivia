@@ -90,7 +90,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         await user.setAuthToken(authToken);
 
         res.writeHead(200, {'Content-Type': 'application/json'});
-        res.write(JSON.stringify({ token }));
+        res.write(JSON.stringify({ token, id: user.id, username: user.username }));
         res.end();
       });
     });
@@ -100,6 +100,13 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
     const { username, password } = req.body;
 
     const user = await User.findOne({ where: { username } });
+
+    if (!user) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.write(JSON.stringify({type: 'AUTHENTICATION_ERROR', message: 'Could not validate username/password'}));
+      res.end();
+    }
+
     const match = await bcrypt.compare(password, user.pwHash);
     if (match) {
 
@@ -116,7 +123,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       await authToken.save();
       await user.setAuthToken(authToken);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.write(JSON.stringify({ token: token }));
+      res.write(JSON.stringify({ token, username: user.username, id: user.id }));
       res.end();
 
     } else {
@@ -277,17 +284,9 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
     return;
   });
 
-  app.get('/questions', async (req, res) => {
+  app.get('/questions', checkUser, async (req, res) => {
 
     const errorResponse = new APIError();
-
-    if (!req.query.userId) {
-      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
-          name: 'userId',
-          reason: 'Not Present',
-          location: 'QUERY'
-      }]);
-    }
 
     if (!req.query.gameId) {
       errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
@@ -304,17 +303,7 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       
       return;
     }
-
-    const userId = Number(req.query.userId);
     const gameId = Number(req.query.gameId);
-
-    if (isNaN(userId)) {
-      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
-        name: 'userId',
-        reason: 'Not an integer',
-        location: 'QUERY'
-      }]);
-    }
 
     if (isNaN(gameId)) {
       errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
@@ -332,16 +321,8 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
       return;
     }
 
-    const user = await User.findByPk(userId);
+    const user = req.user;
     const game = await Game.findByPk(gameId);
-
-    if (!user) {
-      errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
-          name: 'userId',
-          value: req.body.userId,
-          reason: 'User not found'
-      }])
-    }
 
     if (!game) {
       errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{

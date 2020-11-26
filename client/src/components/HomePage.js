@@ -15,8 +15,6 @@ function JoinRoom() {
 }
 
 export default function HomePage(props) {
-    const user = props.user;
-
     return (
         <div id="home-page">
             <div className="row justify-content-center" style={{minHeight: '300px', paddingTop: '3rem'}}>

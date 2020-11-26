@@ -8,6 +8,8 @@ export const isLoadingSelector = (state) => state.loading.isLoading;
 
 export const selectGame = id => state => state.games.games.find(game => game.id == id)
 
+export const loggedInSelector = state => state.users.currentUser && state.users.currentUser.token;
+
 function sortOnIndex(el1, el2) {
     if (el1.index > el2.index) {
         return 1;

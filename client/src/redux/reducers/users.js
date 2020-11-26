@@ -1,4 +1,4 @@
-import { NEW_USER, NEW_USER_RESPONSE, NEW_USER_ERROR } from '../actionTypes';
+import { NEW_USER, NEW_USER_RESPONSE, NEW_USER_ERROR, LOGIN_USER_SUCCESS, LOGIN_USER_ERROR, LOGOUT_SUCCESS } from '../actionTypes';
 import { newUserResponse, newUserError } from '../actions';
 
 const initialState = {
@@ -14,7 +14,11 @@ export function userReducer(state = initialState, action) {
         case NEW_USER_RESPONSE: {
             return {
                 ...state,
-                currentUser: action.payload
+                currentUser: {
+                    username: action.payload.username,
+                    id: action.payload.id,
+                    token: action.payload.token
+                }
             }
         }
         case NEW_USER_ERROR: {
@@ -23,6 +27,31 @@ export function userReducer(state = initialState, action) {
                 error: {
                     code: action.payload.code,
                     message: action.payload.message
+                }
+            }
+        }
+        case LOGIN_USER_SUCCESS: {
+            return {
+                ...state,
+                currentUser: {
+                    username: action.payload.username,
+                    id: action.payload.id,
+                    token: action.payload.token
+                }
+            }
+        }
+        case LOGIN_USER_ERROR: {
+            return {
+                ...state,
+                error: action.error
+            };
+        }
+        case LOGOUT_SUCCESS: {
+            return {
+                ...state,
+                currentUser: {
+                    username: null,
+                    token: null
                 }
             }
         }
@@ -43,9 +72,11 @@ export function createNewUser({username, password}) {
                 body: JSON.stringify({ username, password })
             });
 
-            res = await res.json();
-            localStorage.setItem('token', res.token);
-            dispatch(newUserResponse(json));
+            let body = await res.json();
+            localStorage.setItem('token', body.token);
+            localStorage.setItem('username', body.username);
+            localStorage.setItem('id', body.id);
+            dispatch(newUserResponse(res));
         } catch (error) {
             console.log('NEW_USER_ERROR:', error);
             dispatch(newUserError('500','Server Error: Could not create a user'));

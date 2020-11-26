@@ -1,4 +1,6 @@
-import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE, NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS } from './actionTypes';
+import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE,
+         NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS,
+         FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS, LOGIN_USER_SUCCESS, LOGIN_USER_ERROR } from './actionTypes';
 
 export const createRoom = name => ({
     type: CREATE_ROOM,
@@ -27,19 +29,17 @@ export function newUserResponse(user) {
 
 export function createNewGame(name, routeToGamesPage) {
     return async function(dispatch, getState) {
-        const state = getState();
-        const user = state.users.currentUser;
-        console.log('Submitting request for ', user.name, user.id, name);
+        const token = getState().users.currentUser.token;
 
         try {
             let res = await fetch('/games', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
                 },
                 body: JSON.stringify({
-                    name,
-                    ownerId: user.id
+                    name
                 })
             });
 
@@ -62,12 +62,12 @@ export function fetchGames(userId, options = {}) {
     return async function(dispatch, getState) {
 
         if (!userId) {
-            userId = getState().users.currentUser.id;
+            userId = getState().users.currentUser.token;
         }
 
         dispatch({type: FETCH_GAMES, payload: {}});
 
-        let url = '/games?userId=' + encodeURIComponent(userId);
+        let url = '/games';
         if (options.includeQuestions) {
             url += '&includeQuestions';
         }
@@ -92,12 +92,70 @@ export function fetchGames(userId, options = {}) {
 export function fetchQuestionsForGame(gameId) {
     return async function(dispatch, getState) {
         const userId = getState().users.currentUser.id;
+        const token = getState().users.currentUser.token;
 
-        let res = await fetch(`/questions?userId=${userId}&gameId=${gameId}`);
+        let res = await fetch(`/questions?gameId=${gameId}`, {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
 
         res = await res.json();
 
         dispatch({type: FETCH_QUESTIONS_SUCCESS, questions: res});
+    }
+}
+
+export function login(username, password) {
+    return async function (dispatch, getState) {
+        
+        try {
+            let res = await fetch('/tokens', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            let body = await res.json();
+
+            if (res.status !== 200) {
+                dispatch({type: LOGIN_USER_ERROR, error: body.message});
+                return;
+            }
+
+            localStorage.setItem('token', body.token);
+            localStorage.setItem('username', body.username);
+            localStorage.setItem('id', body.id)
+            dispatch({ type: LOGIN_USER_SUCCESS, payload: body});
+        } catch (error) {
+            dispatch({ type: LOGIN_USER_ERROR, error: error.message })
+        }
+    }
+}
+
+export function logout() {
+    return async function (dispatch, getState) {
+
+        let token = getState().users.currentUser.token;
+
+        let res = await fetch('/tokens', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+
+        if (res.status == 200) {
+            localStorage.removeItem('username');
+            localStorage.removeItem('token');
+            dispatch({ type: 'LOGOUT_SUCCESS' })
+        } else {
+            let body = await res.json();
+            console.log('Could not logout', body);
+        }
+
     }
 }
 

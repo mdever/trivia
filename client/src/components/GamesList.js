@@ -5,8 +5,8 @@ import { fetchGames } from '../redux/actions';
 
 function GameItem(props) {
     return (
-        <div class="card">
-            <div class="card-body">
+        <div className="card">
+            <div className="card-body">
                 <Link to={'/games/' + props.game.id}>{props.game.name}</Link>
             </div>
         </div>

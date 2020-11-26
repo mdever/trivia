@@ -3,7 +3,9 @@ import thunk from 'redux-thunk';
 import rootReducer from './reducers';
 import { composeWithDevTools } from 'redux-devtools-extension';
 
-let user = localStorage.getItem('user');
+let username = localStorage.getItem('username');
+let token    = localStorage.getItem('token');
+
 
 const composedEnhancer = composeWithDevTools(
     applyMiddleware(thunk)
@@ -11,14 +13,16 @@ const composedEnhancer = composeWithDevTools(
 
 let store = null;
 
-if (user) {
-    user = JSON.parse(user);
+if (username) {
     let initialState = {
         rooms: {
             currentRoom: null
         },
         users: {
-            currentUser: user,
+            currentUser: {
+                username,
+                token
+            },
             error: null
         },
         games: {

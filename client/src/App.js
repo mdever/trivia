@@ -10,19 +10,27 @@ import EditGame from './components/EditGame';
 import { useDispatch, useSelector } from 'react-redux';
 import { createNewRoom } from './redux/reducers/rooms';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
-import { useState } from 'react';
 import { createNewUser } from './redux/reducers/users';
-import { currentRoomSelector, currentUserSelector, isLoadingSelector } from './redux/selectors';
+import { login, logout } from './redux/actions';
+import { currentRoomSelector, currentUserSelector, isLoadingSelector, loggedInSelector } from './redux/selectors';
 
 function App() {
   const dispatch = useDispatch();
   const history = useHistory();
   const room = useSelector(currentRoomSelector);
-  const user = useSelector(currentUserSelector);
+  const isLoggedIn = useSelector(loggedInSelector);
   const isAppLoading = useSelector(isLoadingSelector);
 
   function submitPlayer(player) {
     dispatch(createNewUser(player));
+  }
+
+  function doLogin({username, password}) {
+    dispatch(login(username, password));
+  }
+
+  function doLogout() {
+    dispatch(logout());
   }
 
   function createRoom() {
@@ -42,14 +50,14 @@ function App() {
         { isAppLoading &&
           <div>App is loading</div>
         }
-        <Header />
+        <Header login={login} logout={doLogout} login={doLogin}/>
         <div id="main">
           <Router history={history}>
             <Switch>
               <Route exact path="/">
-                {!user   
-                ?  <NewPlayer onSubmit={ player => submitPlayer(player) }/>
-                :  <HomePage user={user} />
+                {!isLoggedIn   
+                ?  <NewPlayer onCreateUser={ player => submitPlayer(player) }/>
+                :  <HomePage />
                 }
               </Route>
               <Route path="/rooms/:id">

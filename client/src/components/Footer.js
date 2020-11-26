@@ -5,7 +5,7 @@ const footerStyle = {
     right: 0,
     minHeight: '200px',
     backgroundColor: '#636363',
-    paddingTop: '1rem'
+    marginTop: '1.5rem'
 }
 
 export default function Footer() {
