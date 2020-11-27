@@ -5,6 +5,7 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 
 let username = localStorage.getItem('username');
 let token    = localStorage.getItem('token');
+let id       = localStorage.getItem('id');
 
 
 const composedEnhancer = composeWithDevTools(
@@ -21,7 +22,8 @@ if (username) {
         users: {
             currentUser: {
                 username,
-                token
+                token,
+                id
             },
             error: null
         },

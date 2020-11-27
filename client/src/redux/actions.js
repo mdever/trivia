@@ -149,6 +149,7 @@ export function logout() {
         if (res.status == 200) {
             localStorage.removeItem('username');
             localStorage.removeItem('token');
+            localStorage.removeItem('id');
             dispatch({ type: 'LOGOUT_SUCCESS' })
         } else {
             let body = await res.json();

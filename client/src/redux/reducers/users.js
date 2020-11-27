@@ -76,7 +76,7 @@ export function createNewUser({username, password}) {
             localStorage.setItem('token', body.token);
             localStorage.setItem('username', body.username);
             localStorage.setItem('id', body.id);
-            dispatch(newUserResponse(res));
+            dispatch(newUserResponse(body));
         } catch (error) {
             console.log('NEW_USER_ERROR:', error);
             dispatch(newUserError('500','Server Error: Could not create a user'));
