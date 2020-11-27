@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -45,6 +45,9 @@ export default function EditGame(props) {
     let user = useSelector(currentUserSelector);
     let questions = useSelector(selectQuestionsForGame(id));
     const dispatch = useDispatch();
+    let [showNewQuestionForm, setShowNewQuestionForm] = useState(false);
+
+
 
     useEffect(() => {
         if (!game) {
@@ -74,8 +77,24 @@ export default function EditGame(props) {
             </div>
             }
             <div>
-                <button className="btn btn-primary" onClick={newQuestion}>Create</button>
+                <button className="btn btn-primary" onClick={ () => setShowNewQuestionForm(!showNewQuestionForm) }>Create</button>
             </div>
+
+            { showNewQuestionForm &&
+            
+            <div>
+                <form>
+                    <div className="form-group">
+                        <label htmlFor="questionText">Question</label>
+                        <input type="text" id="questionText" />
+                        <label htmlFor="hint">Hint:</label>
+                        <input type="text" id="hint" />
+                        
+                    </div>
+                </form>
+            </div>
+
+            }
             
         </div>
     )
