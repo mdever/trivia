@@ -2,12 +2,22 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { selectGame, currentUserSelector, selectQuestionsForGame } from '../redux/selectors';
+import { selectGame, currentUserSelector, selectQuestionsForGame, selectAnswersForQuestion } from '../redux/selectors';
 import { fetchGames, fetchQuestionsForGame } from '../redux/actions';
+
+const answerStyle = {
+    marginBottom: '0.5rem'
+};
 
 export function EditQuestion(props) {
 
+    const answers = useSelector(selectAnswersForQuestion(props.question.id));
+
     const idx = props.idx;
+
+    function addQuestion() {
+        console.log('adding new question');
+    }
 
     return (
 
@@ -23,8 +33,22 @@ export function EditQuestion(props) {
             <div id={'question_' + idx} className="collapse" aria-labelledby={'heading_' + idx} data-parent="#questions-list">
                 <div className="card-body">
                     Hint: {props.question.hint}
+                    <div id="answers-list">
+                    {
+                    answers.map((answer, idx2) => 
+                        <div style={answerStyle}>
+                            <label htmlFor={'answer_' + idx + '_' + idx2}>Answer: </label>
+                            <input type="text" value={answer.answer} />
+                            <label htmlFor={'answer_correct_' + idx + '_' + idx2}>Correct</label>
+                            <input type="checkbox" checked={answer.correct} />
+                        </div>   
+                    )
+                    }
+                    <button onClick={addQuestion}><img src="/plus.png" /></button>
+            </div>
                 </div>
             </div>
+
         </div>
     )
 }
@@ -35,14 +59,17 @@ function addQuestion(gameId) {
     }
 }
 
-function newQuestion() {
-
+function NewQuestion() {
+    return (
+        <div>
+            New Question
+        </div>
+    );
 }
 
 export default function EditGame(props) {
     let { id } = useParams();
     let game = useSelector(selectGame(id));
-    let user = useSelector(currentUserSelector);
     let questions = useSelector(selectQuestionsForGame(id));
     const dispatch = useDispatch();
     let [showNewQuestionForm, setShowNewQuestionForm] = useState(false);
@@ -58,7 +85,7 @@ export default function EditGame(props) {
 
     return (
         <div>
-            <h3>{game.name}</h3>
+            { game && <h3>{game.name}</h3> }
             <h5>Questions</h5>
             { !game &&
             <div>
@@ -76,23 +103,15 @@ export default function EditGame(props) {
                 </div>
             </div>
             }
+            { !showNewQuestionForm &&
             <div>
                 <button className="btn btn-primary" onClick={ () => setShowNewQuestionForm(!showNewQuestionForm) }>Create</button>
             </div>
+            }
 
             { showNewQuestionForm &&
             
-            <div>
-                <form>
-                    <div className="form-group">
-                        <label htmlFor="questionText">Question</label>
-                        <input type="text" id="questionText" />
-                        <label htmlFor="hint">Hint:</label>
-                        <input type="text" id="hint" />
-                        
-                    </div>
-                </form>
-            </div>
+            <NewQuestion game={game}/>
 
             }
             

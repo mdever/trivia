@@ -29,8 +29,12 @@ function App() {
     dispatch(login(username, password));
   }
 
-  function doLogout() {
-    dispatch(logout());
+  function doLogout(then) {
+    return function() {
+      dispatch(logout());
+      then();
+    }
+
   }
 
   function createRoom() {
@@ -50,7 +54,7 @@ function App() {
         { isAppLoading &&
           <div>App is loading</div>
         }
-        <Header login={login} logout={doLogout} login={doLogin}/>
+        <Header login={login} logout={doLogout(() => history && history.push('/'))} login={doLogin}/>
         <div id="main">
           <Router history={history}>
             <Switch>
