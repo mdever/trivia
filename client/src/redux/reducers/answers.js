@@ -1,4 +1,4 @@
-import { FETCH_QUESTIONS_SUCCESS } from '../actionTypes';
+import { FETCH_QUESTIONS_SUCCESS, DELETE_ANSWER_SUCCESS } from '../actionTypes';
 
 const initialState = {
     byId: {},
@@ -24,6 +24,17 @@ export function answersReducer(state = initialState, action) {
                 allIds,
                 byId
             };
+        }
+        case DELETE_ANSWER_SUCCESS: {
+            const answerId = action.payload.answerId;
+            let remainingIds = state.allIds.filter(id => id != answerId);
+            let answers = {};
+            remainingIds.map(id => answers[id] = state.byId[id]);
+            return {
+                ...state,
+                allIds: remainingIds,
+                byId: answers
+            }
         }
         default: {
             return state;

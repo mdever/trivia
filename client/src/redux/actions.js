@@ -1,6 +1,6 @@
 import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE,
          NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS,
-         FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS, LOGIN_USER_SUCCESS, LOGIN_USER_ERROR } from './actionTypes';
+         FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS, LOGIN_USER_SUCCESS, LOGIN_USER_ERROR, DELETE_ANSWER_SUCCESS, DELETE_ANSWER_ERROR } from './actionTypes';
 
 export const createRoom = name => ({
     type: CREATE_ROOM,
@@ -156,6 +156,29 @@ export function logout() {
             console.log('Could not logout', body);
         }
 
+    }
+}
+
+export function deleteAnswer(answerId) {
+    return async function(dispatch, getState) {
+        let token = getState().users.currentUser.token;
+
+        try {
+            let res = await fetch('/answers/' + answerId, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            if (res == 200) {
+                dispatch(DELETE_ANSWER_SUCCESS, { answerId })
+            } else {
+                dispatch(DELETE_ANSWER_ERROR, { error: 'Non-200 response code' })
+            }
+        } catch (error) {
+            dispatch(DELETE_ANSWER_ERROR, { error })
+        }
     }
 }
 

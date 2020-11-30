@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { selectGame, currentUserSelector, selectQuestionsForGame, selectAnswersForQuestion } from '../redux/selectors';
-import { fetchGames, fetchQuestionsForGame } from '../redux/actions';
+import { fetchGames, fetchQuestionsForGame, deleteAnswer } from '../redux/actions';
 
 const answerStyle = {
     marginBottom: '0.5rem'
@@ -11,13 +11,22 @@ const answerStyle = {
 
 export function EditQuestion(props) {
 
+    let [showNewAnswer, setShowNewAnswer] = useState(false);
     const answers = useSelector(selectAnswersForQuestion(props.question.id));
+    const dispatch = useDispatch();
 
     const idx = props.idx;
 
     function addQuestion() {
         console.log('adding new question');
     }
+
+    function doDeleteAnswer(answerId) {
+        return function() {
+            dispatch(deleteAnswer(answerId));
+        }
+    }
+    
 
     return (
 
@@ -41,10 +50,17 @@ export function EditQuestion(props) {
                             <input type="text" value={answer.answer} />
                             <label htmlFor={'answer_correct_' + idx + '_' + idx2}>Correct</label>
                             <input type="checkbox" checked={answer.correct} />
+                            <button style={{float: 'right'}}onClick={doDeleteAnswer(answer.id)}><img src="/clear.png" style={{height: '15px'}} /></button>
                         </div>   
                     )
                     }
-                    <button onClick={addQuestion}><img src="/plus.png" /></button>
+                    {
+                    showNewAnswer &&
+                    <div style={answerStyle}>
+                        New Answer form
+                    </div>
+                    }
+                    <button onClick={() => setShowNewAnswer(!showNewAnswer)}><img src="/plus.png" style={{height: '15px'}} /></button>
             </div>
                 </div>
             </div>
