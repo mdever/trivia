@@ -1,4 +1,4 @@
-import { FETCH_QUESTIONS_SUCCESS, DELETE_ANSWER_SUCCESS } from '../actionTypes';
+import { FETCH_QUESTIONS_SUCCESS, DELETE_ANSWER_SUCCESS, CREATE_ANSWER_SUCCESS, CREATE_ANSWER_ERROR } from '../actionTypes';
 
 const initialState = {
     byId: {},
@@ -34,6 +34,15 @@ export function answersReducer(state = initialState, action) {
                 ...state,
                 allIds: remainingIds,
                 byId: answers
+            }
+        }
+        case CREATE_ANSWER_SUCCESS: {
+            let allTheIds = [...state.allIds, action.payload.id];
+            let byTheIds = {...state.byId, [action.payload.id]: action.payload};
+            return {
+                ...state,
+                allIds: allTheIds,
+                byId: byTheIds
             }
         }
         default: {

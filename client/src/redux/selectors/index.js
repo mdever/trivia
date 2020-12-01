@@ -29,7 +29,7 @@ export const selectQuestionsForGame = gameId => state => {
 
 export const selectAnswersForQuestion = questionId => state => {
     return state.answers.allIds
-        .map(id => state.answers.byId[id])
+        .map(id => Object.assign({}, { ...state.answers.byId[id]} ))
         .filter(a => a.questionId == questionId)
         .sort(sortOnIndex);
 }

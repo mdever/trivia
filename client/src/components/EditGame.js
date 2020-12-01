@@ -3,65 +3,68 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { selectGame, currentUserSelector, selectQuestionsForGame, selectAnswersForQuestion } from '../redux/selectors';
-import { fetchGames, fetchQuestionsForGame, deleteAnswer } from '../redux/actions';
+import { fetchGames, fetchQuestionsForGame, deleteAnswer, createAnswer } from '../redux/actions';
 
 const answerStyle = {
     marginBottom: '0.5rem'
 };
 
+export function Answer({answer, questionIdx, answerIdx}) {
+    const dispatch = useDispatch();
+    
+    return (
+        <div style={answerStyle}>
+            <label htmlFor={'answer_' + questionIdx + '_' + answerIdx}>Answer: </label>
+            <input type="text" value={answer.answer} />
+            <label htmlFor={'answer_correct_' + questionIdx + '_' + answerIdx}>Correct</label>
+            <input type="checkbox" checked={answer.correct} />
+            <button style={{float: 'right'}}onClick={() => dispatch(deleteAnswer(answer.id))}><img src="/clear.png" style={{height: '15px'}} /></button>
+        </div>
+    )
+}
+
 export function EditQuestion(props) {
 
     let [showNewAnswer, setShowNewAnswer] = useState(false);
+    let [newAnswerText, setNewAnswerText] = useState('');
+    let [newAnswerCorrect, setNewAnswerCorrect] = useState(false);
     const answers = useSelector(selectAnswersForQuestion(props.question.id));
     const dispatch = useDispatch();
 
-    const idx = props.idx;
-
-    function addQuestion() {
-        console.log('adding new question');
-    }
-
-    function doDeleteAnswer(answerId) {
-        return function() {
-            dispatch(deleteAnswer(answerId));
-        }
-    }
-    
+    const questionIdx = props.idx;
 
     return (
 
         <div className="card">
-            <div className="card-header" id={'heading_' + idx}>
+            <div className="card-header" id={'heading_' + questionIdx}>
                 <h2 className="mb-0">
-                    <button className="btn btn-link" onClick={() => document.querySelector('#question_' + idx).classList.toggle('show') } type="button" data-toggle="collapse" data-target={'#question_' + idx} aria-expanded="true" aria-controls={'question_' + props.question.idx}>
+                    <button className="btn btn-link" onClick={() => document.querySelector('#question_' + questionIdx).classList.toggle('show') } type="button" data-toggle="collapse" data-target={'#question_' + questionIdx} aria-expanded="true" aria-controls={'question_' + questionIdx}>
                         {props.question.question}
                     </button>
                 </h2>
             </div>
 
-            <div id={'question_' + idx} className="collapse" aria-labelledby={'heading_' + idx} data-parent="#questions-list">
+            <div id={'question_' + questionIdx} className="collapse" aria-labelledby={'heading_' + questionIdx} data-parent="#questions-list">
                 <div className="card-body">
                     Hint: {props.question.hint}
                     <div id="answers-list">
                     {
-                    answers.map((answer, idx2) => 
-                        <div style={answerStyle}>
-                            <label htmlFor={'answer_' + idx + '_' + idx2}>Answer: </label>
-                            <input type="text" value={answer.answer} />
-                            <label htmlFor={'answer_correct_' + idx + '_' + idx2}>Correct</label>
-                            <input type="checkbox" checked={answer.correct} />
-                            <button style={{float: 'right'}}onClick={doDeleteAnswer(answer.id)}><img src="/clear.png" style={{height: '15px'}} /></button>
-                        </div>   
+                    answers.map((answer, answerIdx) => 
+                        <Answer answer={answer} questionIdx={questionIdx} answerIdx={answerIdx} />
                     )
                     }
                     {
                     showNewAnswer &&
-                    <div style={answerStyle}>
-                        New Answer form
-                    </div>
+                        <div style={answerStyle}>
+                            <label htmlFor={'answer_' + questionIdx + '_new'}>Answer: </label>
+                            <input type="text" id="new-answer-text" onChange={(event) => setNewAnswerText(event.target.value) }/>
+                            <label htmlFor={'answer_correct_' + questionIdx + '_new'}>Correct</label>
+                            <input type="checkbox" id="new-answer-correct" onChange={event => setNewAnswerCorrect(event.target.value) } />
+                            <button className="btn btn-primary" style={{float: 'right'}} onClick={ () => dispatch(createAnswer(props.question.id, newAnswerText, newAnswerCorrect)) }>Save</button>
+                        </div>
                     }
-                    <button onClick={() => setShowNewAnswer(!showNewAnswer)}><img src="/plus.png" style={{height: '15px'}} /></button>
-            </div>
+                        <button onClick={() => setShowNewAnswer(!showNewAnswer)}><img src="/plus.png" style={{height: '15px'}} /></button>
+                    </div>
                 </div>
             </div>
 
