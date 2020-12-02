@@ -363,6 +363,176 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
 
   });
 
+  app.post('/answers', checkUser, async (req, res) => {
+    const errorResponse = new APIError();
+    
+    if (!req.body.questionId) {
+      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+        name: 'questionId', reason: 'not present', location: 'BODY'
+      }])
+    }
+
+    if (!req.body.answer) {
+      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+        name: 'answer', reason: 'not present', location: 'BODY'
+      }])
+    }
+
+    if (typeof req.body.correct === 'undefined') {
+      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+        name: 'correct', reason: 'not present', location: 'BODY'
+      }])
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(400, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+
+      return;
+    }
+
+    let questionId = Number(req.body.questionId);
+    if (isNaN(questionId)) {
+      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
+        name: 'questionId',
+        reason: 'Not an integer',
+        location: 'BODY'
+      }]);
+    }
+
+    if (typeof req.body.correct !== 'boolean') {
+      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
+        name: 'correct',
+        reason: 'Not a boolean',
+        location: 'BODY'
+      }]);
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(400, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+
+      return;
+    }
+
+    const question = await Question.findByPk(questionId);
+
+    if (!question) {
+      errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
+        name: 'questionId',
+        value: questionId,
+        reason: 'Question not found'
+      }]);
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(404, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+
+      return;
+    }
+
+    const game = await question.getGame();
+    if (game.ownerId != req.user.id) {
+      errorResponse.addAuthorizationError(ErrorSubTypes.AUTHORIZATION_ERROR.ACCESS_TO_RESOURCE_DENIED, 'Requested to add an answer to a question in a game not owned by user ' + req.user.username);
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(401, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+
+      return;
+    }
+
+    const answer = Answer.build({
+      answer: req.body.answer,
+      correct: req.body.correct
+    });
+
+    if (req.body.index) {
+      answer.index = req.body.index;
+    } else {
+      const answersForQuestion = await Answer.findAll({ where: { questionId: question.id }, order: [['index', 'DESC']] });
+      let nextIndex;
+      if (answersForQuestion.length > 0) {
+        nextIndex = answersForQuestion[0].index + 1;
+      } else {
+        nextIndex = 0;
+      }
+
+      answer.index = nextIndex;
+    }
+
+    await answer.save();
+
+    await question.addAnswer(answer);
+
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.write(JSON.stringify(answer));
+    res.end();
+
+    return;
+
+  });
+
+  app.delete('/answers/:id', checkUser, async (req, res) => {
+    const errorResponse = new APIError();
+    let id = req.params.id;
+    if (!id) {
+      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+        name: 'id', reason: 'not present', location: 'PATH'
+      }]);
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(400, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+      return;
+    }
+
+    let answer = await Answer.findByPk(id);
+    if (!answer) {
+      errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
+        name: 'id',
+        value: id,
+        reason: 'Answer not found'
+      }]);
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(404, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+      return;
+    }
+
+    let question = await answer.getQuestion();
+    let game = await question.getGame();
+    let user = await game.getUser();
+
+    if (user.id != req.user.id) {
+      errorResponse.addAuthenticationError(ErrorSubTypes.AUTHORIZATION_ERROR.ACCESS_TO_RESOURCE_DENIED, 'Answer not accessible by user ' + req.user.id);
+    }
+
+    if (errorResponse.hasErrors()) {
+      res.writeHead(401, {'Content-Type': 'application/json'});
+      res.write(errorResponse.getErrorResponse());
+      res.end();
+      return;
+    }
+
+    await answer.destroy();
+
+    res.writeHead(200);
+    res.end();
+
+  });
+
   app.post('/games', checkUser, async (req, res) => {
     const errorResponse = new APIError();
 

@@ -132,8 +132,7 @@ module.exports = function(sequelize) {
             allowNull: false
         },
         index: {
-            type: DataTypes.INTEGER,
-            allowNull: false
+            type: DataTypes.INTEGER
         },
         correct: {
             type: DataTypes.BOOLEAN
@@ -176,10 +175,16 @@ module.exports = function(sequelize) {
     Question.hasMany(Answer, {
         foreignKey: 'questionId'
     });
+    Answer.belongsTo(Question, {
+        foreignKey: 'questionId'
+    })
 
     Game.hasMany(Question, {
         foreignKey: 'gameId'
     });
+    Question.belongsTo(Game, {
+        foreignKey: 'gameId'
+    })
 
     User.belongsToMany(Room, { through: UserSessions, foreignKey: 'userId'  });
     Room.belongsToMany(User, { through: UserSessions, foreignKey: 'roomId' });
@@ -191,6 +196,9 @@ module.exports = function(sequelize) {
     User.hasMany(Game, {
         foreignKey: 'ownerId'
     });
+    Game.belongsTo(User, {
+        foreignKey: 'ownerId'
+    })
     
 
     return {

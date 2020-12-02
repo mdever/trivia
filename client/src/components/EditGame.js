@@ -57,7 +57,7 @@ export function EditQuestion(props) {
                     showNewAnswer &&
                         <div style={answerStyle}>
                             <label htmlFor={'answer_' + questionIdx + '_new'}>Answer: </label>
-                            <input type="text" id="new-answer-text" onChange={(event) => setNewAnswerText(event.target.value) }/>
+                            <input type="text" id="new-answer-text" onChange={event => setNewAnswerText(event.target.value) }/>
                             <label htmlFor={'answer_correct_' + questionIdx + '_new'}>Correct</label>
                             <input type="checkbox" id="new-answer-correct" onChange={event => setNewAnswerCorrect(event.target.value) } />
                             <button className="btn btn-primary" style={{float: 'right'}} onClick={ () => dispatch(createAnswer(props.question.id, newAnswerText, newAnswerCorrect)) }>Save</button>
