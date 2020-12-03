@@ -245,11 +245,22 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
     }
 
     for (let q of req.body.questions) {
+
       const question = Question.build({
         question: q.question,
         hint: q.hint,
-        index: q.index
       })
+
+      if (req.body.index) {
+        question.index = index;
+      } else {
+        const questions = await Question.findAll({where: { gameId }, order: [['index', 'DESC']]});
+        if (questions.length > 0) {
+          question.index = questions[0].index + 1;
+        } else {
+          question.index = 0;
+        }
+      }
 
       try {
         await question.save();
@@ -259,19 +270,21 @@ module.exports = function(app, {User, Room, UserSessions, Question, Answer, Game
         console.log(error);
       }
 
-      for (let a of q.answers) {
-        const answer = Answer.build({
-          answer: a.answer,
-          index: a.index,
-          correct: a.correct
-        })
+      if (a.answers) {
+        for (let a of q.answers) {
+          const answer = Answer.build({
+            answer: a.answer,
+            index: a.index,
+            correct: a.correct
+          })
 
-        try {
-          await answer.save();
-          await question.addAnswer(answer);
-        } catch (error) {
-          console.log('Error assigning answer to question');
-          console.log(error);
+          try {
+            await answer.save();
+            await question.addAnswer(answer);
+          } catch (error) {
+            console.log('Error assigning answer to question');
+            console.log(error);
+          }
         }
       }
     }

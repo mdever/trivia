@@ -1,3 +1,5 @@
+import { createSelector } from 'reselect';
+
 export const currentRoomSelector = (state) =>  state.rooms.currentRoom;
   
 export const currentUserSelector = (state) => state.users.currentUser;
@@ -27,9 +29,13 @@ export const selectQuestionsForGame = gameId => state => {
         .sort(sortOnIndex);
 }
 
-export const selectAnswersForQuestion = questionId => state => {
-    return state.answers.allIds
-        .map(id => Object.assign({}, { ...state.answers.byId[id]} ))
-        .filter(a => a.questionId == questionId)
-        .sort(sortOnIndex);
+export const selectAnswersForQuestion = questionId => {
+    return createSelector(
+        state => state.answers,
+        answers => 
+            answers.allIds
+                .map(id => Object.assign({}, { ...answers.byId[id]} ))
+                .filter(a => a.questionId == questionId)
+                .sort(sortOnIndex)
+    )
 }

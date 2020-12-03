@@ -2,7 +2,8 @@ import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE,
          NEW_USER_ERROR, NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS,
          FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS, LOGIN_USER_SUCCESS,
          LOGIN_USER_ERROR, DELETE_ANSWER_SUCCESS, DELETE_ANSWER_ERROR,
-         CREATE_ANSWER_ERROR, CREATE_ANSWER_SUCCESS } from './actionTypes';
+         CREATE_ANSWER_ERROR, CREATE_ANSWER_SUCCESS, CREATE_QUESTION_SUCCESS,
+         CREATE_QUESTION_ERROR, LOGIN_ERROR } from './actionTypes';
 
 export const createRoom = name => ({
     type: CREATE_ROOM,
@@ -104,6 +105,42 @@ export function fetchQuestionsForGame(gameId) {
         res = await res.json();
 
         dispatch({type: FETCH_QUESTIONS_SUCCESS, questions: res});
+    }
+}
+
+export function createQuestion(gameId, questionText, hint) {
+    return async function (dispatch, getState) {
+        
+        const token = getState().users.currentUser.token;
+
+        try {
+            let res = await fetch('/questions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ questions: [{question: questionText, hint: hint}], gameId})
+            });
+
+            if (res.status != 200) {
+                let body = res.json();
+                if (body) {
+                    dispatch({type: CREATE_QUESTION_ERROR, payload: {reason: 'Received non-200 response code', response: body }});
+                } else {
+                    dispatch({type: CREATE_QUESTION_ERROR, payload: {reason: 'Received non-200 response code'}});
+                }
+                
+                return;
+            }
+
+            let body = res.json();
+            dispatch({type: CREATE_QUESTION_SUCCESS, payload: body});
+
+
+        } catch (error) {
+            dispatch({type: CREATE_QUESTION_ERROR, payload: error.message});
+        }
     }
 }
 

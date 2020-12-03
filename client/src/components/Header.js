@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useRouteMatch } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { loggedInSelector } from '../redux/selectors';
 
@@ -11,11 +13,18 @@ export default function Header(props) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const isLoggedIn = useSelector(loggedInSelector);
+    let match = useRouteMatch('/');
 
     return (
         <header style={headerStyle}>
             <div className="row">
-                <div className="col-md-4 offset-md-4">
+                { !match.isExact &&
+                <div className="col-md-4">
+                    <Link to="/">Home</Link>
+                </div>
+                }
+
+                <div className={ match.isExact ? 'col-md-4 offset-md-4' : 'col-md-4' }>
                     <h1>Trivia</h1>
                 </div>
                 { isLoggedIn &&

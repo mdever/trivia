@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { selectGame, currentUserSelector, selectQuestionsForGame, selectAnswersForQuestion } from '../redux/selectors';
-import { fetchGames, fetchQuestionsForGame, deleteAnswer, createAnswer } from '../redux/actions';
+import { fetchGames, fetchQuestionsForGame, deleteAnswer, createAnswer, createQuestion } from '../redux/actions';
 
 const answerStyle = {
     marginBottom: '0.5rem'
@@ -29,7 +29,7 @@ export function EditQuestion(props) {
     let [newAnswerText, setNewAnswerText] = useState('');
     let [newAnswerCorrect, setNewAnswerCorrect] = useState(false);
     const answers = useSelector(selectAnswersForQuestion(props.question.id));
-    const dispatch = useDispatch();
+    const dispatch  = useDispatch();
 
     const questionIdx = props.idx;
 
@@ -59,7 +59,7 @@ export function EditQuestion(props) {
                             <label htmlFor={'answer_' + questionIdx + '_new'}>Answer: </label>
                             <input type="text" id="new-answer-text" onChange={event => setNewAnswerText(event.target.value) }/>
                             <label htmlFor={'answer_correct_' + questionIdx + '_new'}>Correct</label>
-                            <input type="checkbox" id="new-answer-correct" onChange={event => setNewAnswerCorrect(event.target.value) } />
+                            <input type="checkbox" id="new-answer-correct" onChange={event => setNewAnswerCorrect(event.target.checked) } />
                             <button className="btn btn-primary" style={{float: 'right'}} onClick={ () => dispatch(createAnswer(props.question.id, newAnswerText, newAnswerCorrect)) }>Save</button>
                         </div>
                     }
@@ -72,16 +72,19 @@ export function EditQuestion(props) {
     )
 }
 
-function addQuestion(gameId) {
-    return function (question) {
-        console.log('Adding question ' + JSON.stringify(question) + ' to game ' + gameId);
-    }
-}
+function NewQuestion({show, game}) {
 
-function NewQuestion() {
+    const dispatch = useDispatch();
+    let [questionText, setQuestionText] = useState('');
+    let [hint, setHint] = useState('');
+
     return (
-        <div>
-            New Question
+        <div style={ !show ? { display: 'none' } : {}}>
+            <label htmlFor="new-question-text">Question: </label>
+            <input type="text" name="newQuestionText" id="new-question-text" onChange={ (event) => setQuestionText(event.target.value) } />
+            <label htmlFor="new-question-hint">Hint: </label>
+            <input type="text" name="newQuestionHint" id="new-question-hint" onChange={ event => setHint(event.target.value) } />
+            <button onClick={() => dispatch(createQuestion(game.id, questionText, hint))} className="btn btn-primary" style={{float: 'right'}}>Save</button>
         </div>
     );
 }
@@ -116,21 +119,19 @@ export default function EditGame(props) {
                 <div className="accordion" id="questions-list">
                     { 
                         questions.map((question, idx) => 
-                            <EditQuestion question={question} key={idx} idx={idx} addQuestion={addQuestion(id)} />
+                            <EditQuestion question={question} key={idx} idx={idx} />
                         )
                     }
                 </div>
             </div>
             }
-            { !showNewQuestionForm &&
             <div>
                 <button className="btn btn-primary" onClick={ () => setShowNewQuestionForm(!showNewQuestionForm) }>Create</button>
             </div>
-            }
 
             { showNewQuestionForm &&
             
-            <NewQuestion game={game}/>
+            <NewQuestion game={game} show={showNewQuestionForm} />
 
             }
             

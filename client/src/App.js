@@ -50,32 +50,33 @@ function App() {
 
   return (
     <div className="App">
-      <Main setAppLoading={setAppLoading}>
-        { isAppLoading &&
-          <div>App is loading</div>
-        }
-        <Header login={login} logout={doLogout(() => history && history.push('/'))} login={doLogin}/>
-        <div id="main">
-          <Router history={history}>
-            <Switch>
-              <Route exact path="/">
-                {!isLoggedIn   
-                ?  <NewPlayer onCreateUser={ player => submitPlayer(player) }/>
-                :  <HomePage />
-                }
-              </Route>
-              <Route path="/rooms/:id">
-                
-              </Route>
-              <Route path="/games/:id">
-                <EditGame />
-              </Route>
-            </Switch>
-          </Router>
-        </div>
-        <Footer />
-      </Main>
+      <Router history={history}>
+        <Main setAppLoading={setAppLoading}>
+          { isAppLoading &&
+            <div>App is loading</div>
+          }
+          <Header login={login} logout={doLogout(() => history && history.push('/'))} login={doLogin}/>
+          <div id="main">
 
+              <Switch>
+                <Route exact path="/">
+                  {!isLoggedIn   
+                  ?  <NewPlayer onCreateUser={ player => submitPlayer(player) }/>
+                  :  <HomePage />
+                  }
+                </Route>
+                <Route path="/rooms/:id">
+                  
+                </Route>
+                <Route path="/games/:id">
+                  <EditGame />
+                </Route>
+              </Switch>
+
+          </div>
+          <Footer />
+        </Main>
+      </Router>
     </div>
   );
 }
