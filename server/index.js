@@ -3,9 +3,10 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const config = require('dotenv').config();
-
-
 const { Sequelize, DataTypes, Op } = require('sequelize');
+const wscontroller = require('./ws-controller');
+
+const nodeServerSubject = wscontroller.nodeServerSubject;
 
 console.log('Attempting to connect to database with properties:');
 console.log(config);
@@ -43,10 +44,13 @@ async function create() {
   }
 }
 
+let server;
 async function main() {
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log('Trivia Server app is now listening');
   });
+
+  nodeServerSubject.set(server);
 }
 
 
