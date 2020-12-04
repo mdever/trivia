@@ -61,7 +61,15 @@ module.exports = function(app) {
         for (let {fieldName, location, type} of specs) {
             let theValue;
             if (location === 'BODY') {
-
+                if (!req.body[fieldName]) {
+                    errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+                        name: fieldName,
+                        reason: 'Not Present',
+                        location: 'BODY'
+                    }]);
+                    continue;
+                }
+                theValue = req.body[fieldName]
             } else if (location === 'QUERY') {
                 if (!req.query[fieldName]) {
                     errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
@@ -69,10 +77,18 @@ module.exports = function(app) {
                         reason: 'Not Present',
                         location: 'QUERY'
                     }]);
+                    continue
                 }
                 theValue = req.query[fieldName];
             } else if (location === 'PATH') {
-    
+                if (!req.params[fieldName]) {
+                    errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
+                        name: fieldName,
+                        reason: 'Not Present',
+                        location: 'PATH'
+                    }]);
+                    continue;
+                }
             }
 
             if (type) {
@@ -85,14 +101,22 @@ module.exports = function(app) {
                           location: location
                         }]);
                       }
-                  
-                      if (errorResponse.hasErrors()) {
-                        res.writeHead(400, {'Content-Type': 'application/json'});
-                        res.write(errorResponse.getErrorResponse());
-                        res.send();
-                        
-                        return;
-                      }
+                } else if (type === 'array') {
+                    if (!Array.isArray(theValue)) {
+                        errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
+                            name: fieldName,
+                            reason: 'Not an array',
+                            location: location
+                        }]);
+                    }
+                } else if (type === 'boolean') {
+                    if (typeof req.body[fieldName] !== 'boolean') {
+                        errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
+                            name: fieldName,
+                            reason: 'Not a boolean',
+                            location: location
+                        }]);
+                    }
                 }
             }
         }
