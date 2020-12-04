@@ -17,14 +17,13 @@ const sequelize = new Sequelize('main', config.SQLITE_USER, config.SQLITE_PASSWO
 });
 const models = require('./models')(sequelize);
 
-
 const app = express();
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
 
 const port = 8080;
 
-const webRoutes = require('./web.js')(app, models);
+const webRoutes = require('./web')(app);
 
 async function authenticate() {
   try {
