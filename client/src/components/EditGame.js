@@ -99,10 +99,7 @@ export default function EditGame(props) {
 
 
     useEffect(() => {
-        if (!game) {
-            dispatch(fetchGames({includeQuestions: true}));
-            dispatch(fetchQuestionsForGame(id));
-        }
+        dispatch(fetchQuestionsForGame(id));
     }, [id]);
 
     return (

@@ -257,28 +257,13 @@ module.exports = function(app) {
 
   app.get('/questions',
           checkUser,
-          validatesPresence([{fieldName: 'gameId', location: 'QUERY'}]),
+          validatesPresence([{fieldName: 'gameId', location: 'QUERY', type: 'number'}]),
           async (req, res) => {
 
     const errorResponse = new APIError();
 
     const gameId = Number(req.query.gameId);
 
-    if (isNaN(gameId)) {
-      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
-        name: 'gameId',
-        reason: 'Not an integer',
-        location: 'QUERY'
-      }]);
-    }
-
-    if (errorResponse.hasErrors()) {
-      res.writeHead(400, {'Content-Type': 'application/json'});
-      res.write(errorResponse.getErrorResponse());
-      res.send();
-      
-      return;
-    }
 
     const user = req.user;
     const game = await Game.findByPk(gameId);

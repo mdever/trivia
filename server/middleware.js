@@ -58,7 +58,8 @@ module.exports = function(app) {
     validatesPresence = specs => async (req, res, next) => {
         const errorResponse = new APIError();
 
-        for (let {fieldName, location} of specs) {
+        for (let {fieldName, location, type} of specs) {
+            let theValue;
             if (location === 'BODY') {
 
             } else if (location === 'QUERY') {
@@ -68,11 +69,32 @@ module.exports = function(app) {
                         reason: 'Not Present',
                         location: 'QUERY'
                     }]);
-                  }
+                }
+                theValue = req.query[fieldName];
             } else if (location === 'PATH') {
     
             }
-    
+
+            if (type) {
+                if (type === 'number') {
+                    theValue = Number(theValue);
+                    if (isNaN(theValue)) {
+                        errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
+                          name: fieldName,
+                          reason: 'Not an integer',
+                          location: location
+                        }]);
+                      }
+                  
+                      if (errorResponse.hasErrors()) {
+                        res.writeHead(400, {'Content-Type': 'application/json'});
+                        res.write(errorResponse.getErrorResponse());
+                        res.send();
+                        
+                        return;
+                      }
+                }
+            }
         }
 
         if (errorResponse.hasErrors()) {
