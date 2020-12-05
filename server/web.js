@@ -3,6 +3,9 @@ const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const utils = require('./utils');
 const { checkUser, validatesPresence } = require('./middleware')();
+const { WSController } = require('./ws-controller');
+
+const wsController = WSController.getInstance();
 
 const {User, Room, UserSessions, Question, Answer, Game, AuthToken} = require('./models')()
 
@@ -120,16 +123,6 @@ module.exports = function(app) {
     await authToken.destroy();
 
     res.writeHead(200);
-    res.end();
-  });
-
-  app.post('/rooms', async (req, res) => {
-    const room = Room.build({ name: req.body.name });
-    const game = await Game.findOne({ id: req.body.gameId });
-    room.setGame(game);
-    await room.save();
-    res.writeHead(200, {'Content-Type': 'application/json'});
-    res.write(JSON.stringify({...room.dataValues}));
     res.end();
   });
 
@@ -296,7 +289,7 @@ module.exports = function(app) {
       {
         fieldName: 'answer',
         location: 'BODY',
-        type: 'array'
+        type: 'string'
       },
       {
         fieldName: 'correct',
@@ -362,9 +355,10 @@ module.exports = function(app) {
       await answer.save();
 
       await question.addAnswer(answer);
+      await answer.setQuestion(question);
 
       res.writeHead(200, {'Content-Type': 'application/json'});
-      res.write(JSON.stringify(answer));
+      res.write(JSON.stringify({...answer.dataValues}));
       res.end();
 
       return;
@@ -497,78 +491,60 @@ module.exports = function(app) {
     res.end();
   });
 
-  app.post('/sessions', checkUser, async (req, res) => {
-    const errorResponse = new APIError();
+  app.post(
+    '/rooms',
+    checkUser,
+    validatesPresence([
+      {
+        fieldName: 'gameId',
+        location: 'BODY',
+        type: 'number'
+      }
+    ]),
+    async (req, res) => {
+      const errorResponse = new APIError();
 
-    if (!req.body.gameId) {
-      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
-        name: 'gameId',
-        reason: 'not present',
-        location: 'BODY'
-      }]);
-    }
+      const gameId = Number(req.body.gameId);
 
-    if (errorResponse.hasErrors()) {
-      res.writeHead(400, {'Content-Type': 'application/json'});
-      res.write(errorResponse.getErrorResponse());
-      res.end();
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
+          name: 'gameId',
+          value: req.body.gameId,
+          reason: 'Game not found'
+        }])
+      }
 
-      return;
-    }
+      if (errorResponse.hasErrors()) {
+        res.writeHead(404, {'Content-Type': 'application/json'});
+        res.write(errorResponse.getErrorResponse());
+        res.end();
 
-    const gameId = Number(req.body.gameId);
-    if (isNaN(gameId)) {
-      errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
-        name: 'gameId',
-        reason: 'Not an integer',
-        location: 'BODY'
-      }]);
-    }
+        return;
+      }
 
-    if (errorResponse.hasErrors()) {
-      res.writeHead(400, {'Content-Type': 'application/json'});
-      res.write(errorResponse.getErrorResponse());
-      res.end();
+      if (req.user.id != game.ownerId) {
+        errorResponse.addAuthorizationError(ErrorSubTypes.AUTHORIZATION_ERROR.ACCESS_TO_RESOURCE_DENIED, 'User ' + req.user.id + ' does not have access to resource Game: ' + gameId);
+      }
 
-      return;
-    }
+      if (errorResponse.hasErrors()) {
+        res.writeHead(401, {'Content-Type': 'application/json'});
+        res.write(errorResponse.getErrorResponse());
+        res.end();
+        return;
+      }
 
-    const game = await Game.findByPk(gameId);
-    if (!game) {
-      errorResponse.addInvalidReferenceError(ErrorSubTypes.INVALID_REFERENCE_ERROR.ENTITY_NOT_FOUND, [{
-        name: 'gameId',
-        value: req.body.gameId,
-        reason: 'Game not found'
-      }])
-    }
+      const code = utils.roomCode();
 
-    if (errorResponse.hasErrors()) {
-      res.writeHead(404, {'Content-Type': 'application/json'});
-      res.write(errorResponse.getErrorResponse());
-      res.end();
+      const room = await Room.create({
+        code
+      });
 
-      return;
-    }
+      await game.addRoom(room);
+      await room.setGame(game);
 
-    if (req.user.id != game.ownerId) {
-      errorResponse.addAuthorizationError(ErrorSubTypes.AUTHORIZATION_ERROR.ACCESS_TO_RESOURCE_DENIED, 'User ' + req.user.id + ' does not have access to resource Game: ' + gameId);
-    }
+      wsController.createRoomServer(room.id);
 
-    if (errorResponse.hasErrors()) {
-      res.writeHead(401, {'Content-Type': 'application/json'});
-      res.write(errorResponse.getErrorResponse());
-      res.end();
-      return;
-    }
-
-    const code = utils.roomCode();
-
-    const room = await Room.create({
-      code
+      return {...room.dataValues}
     });
-
-    await game.addRoom(room);
-
-    return {...room}
-  });
 }

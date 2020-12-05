@@ -4,16 +4,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const config = require('dotenv').config();
 const { Sequelize, DataTypes, Op } = require('sequelize');
-const wscontroller = require('./ws-controller');
+const { WSController } = require('./ws-controller');
 
-const nodeServerSubject = wscontroller.nodeServerSubject;
+const wsController = WSController.getInstance();
 
 console.log('Attempting to connect to database with properties:');
 console.log(config);
 
 const sequelize = new Sequelize('main', config.SQLITE_USER, config.SQLITE_PASSWORD, {
   dialect: 'sqlite',
-  storage: path.join(__dirname, '..', 'trivia.db')
+  storage: path.join(__dirname, '..', 'trivia.db'),
+  logging: true
 });
 const models = require('./models')(sequelize);
 
@@ -49,7 +50,7 @@ async function main() {
     console.log('Trivia Server app is now listening');
   });
 
-  nodeServerSubject.set(server);
+  wsController.set(server);
 }
 
 

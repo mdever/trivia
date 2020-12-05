@@ -56,11 +56,11 @@ export function EditQuestion(props) {
                     {
                     showNewAnswer &&
                         <div style={answerStyle}>
-                            <label htmlFor={'answer_' + questionIdx + '_new'}>Answer: </label>
+                            <label htmlFor={'answer_' + questionIdx + '_new'} style={{marginLeft: '1.5rem'}}>Answer: </label>
                             <input type="text" id="new-answer-text" onChange={event => setNewAnswerText(event.target.value) }/>
                             <label htmlFor={'answer_correct_' + questionIdx + '_new'}>Correct</label>
                             <input type="checkbox" id="new-answer-correct" onChange={event => setNewAnswerCorrect(event.target.checked) } />
-                            <button className="btn btn-primary" style={{float: 'right'}} onClick={ () => dispatch(createAnswer(props.question.id, newAnswerText, newAnswerCorrect)) }>Save</button>
+                            <button className="btn btn-primary" style={{float: 'right'}} onClick={ () => setShowNewAnswer(false) || dispatch(createAnswer(props.question.id, newAnswerText, newAnswerCorrect)) }>Save</button>
                         </div>
                     }
                         <button onClick={() => setShowNewAnswer(!showNewAnswer)}><img src="/plus.png" style={{height: '15px'}} /></button>
@@ -99,7 +99,12 @@ export default function EditGame(props) {
 
 
     useEffect(() => {
-        dispatch(fetchQuestionsForGame(id));
+        if (!game) {
+            dispatch(fetchGames());
+        }
+        if (!questions || questions.length === 0) {
+            dispatch(fetchQuestionsForGame(id));
+        }
     }, [id]);
 
     return (

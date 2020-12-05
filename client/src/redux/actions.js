@@ -216,7 +216,7 @@ export function deleteAnswer(answerId) {
                 dispatch({type: DELETE_ANSWER_ERROR, payload: { error: 'Non-200 response code' }})
             }
         } catch (error) {
-            dispatch(DELETE_ANSWER_ERROR, { error })
+            dispatch({type: DELETE_ANSWER_ERROR, payload: { error }})
         }
     }
 }

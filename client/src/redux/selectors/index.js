@@ -1,4 +1,5 @@
 import { createSelector } from 'reselect';
+import cloneDeep from 'lodash/cloneDeep';
 
 export const currentRoomSelector = (state) =>  state.rooms.currentRoom;
   
@@ -32,10 +33,15 @@ export const selectQuestionsForGame = gameId => state => {
 export const selectAnswersForQuestion = questionId => {
     return createSelector(
         state => state.answers,
-        answers => 
-            answers.allIds
+        answers => {
+            let newAnswers = cloneDeep(answers);
+            newAnswers = newAnswers.allIds
                 .map(id => Object.assign({}, { ...answers.byId[id]} ))
                 .filter(a => a.questionId == questionId)
-                .sort(sortOnIndex)
+                .sort(sortOnIndex);
+
+            return newAnswers;
+        }
+            
     )
 }

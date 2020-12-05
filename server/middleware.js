@@ -61,7 +61,7 @@ module.exports = function(app) {
         for (let {fieldName, location, type} of specs) {
             let theValue;
             if (location === 'BODY') {
-                if (!req.body[fieldName]) {
+                if (typeof req.body[fieldName] === 'undefined') {
                     errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
                         name: fieldName,
                         reason: 'Not Present',
@@ -71,7 +71,7 @@ module.exports = function(app) {
                 }
                 theValue = req.body[fieldName]
             } else if (location === 'QUERY') {
-                if (!req.query[fieldName]) {
+                if (typeof req.query[fieldName] === 'undefined') {
                     errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
                         name: fieldName,
                         reason: 'Not Present',
@@ -81,7 +81,7 @@ module.exports = function(app) {
                 }
                 theValue = req.query[fieldName];
             } else if (location === 'PATH') {
-                if (!req.params[fieldName]) {
+                if (typeof req.params[fieldName] === 'undefined') {
                     errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.PARAMETER_NOT_PRESENT, [{
                         name: fieldName,
                         reason: 'Not Present',
@@ -89,6 +89,7 @@ module.exports = function(app) {
                     }]);
                     continue;
                 }
+                theValue = req.query[fieldName];
             }
 
             if (type) {
@@ -114,6 +115,14 @@ module.exports = function(app) {
                         errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
                             name: fieldName,
                             reason: 'Not a boolean',
+                            location: location
+                        }]);
+                    }
+                } else if (type === 'string') {
+                    if (typeof req.body[fieldName] !== 'string') {
+                        errorResponse.addValidationError(ErrorSubTypes.VALIDATION_ERROR.INVALID_TYPE, [{
+                            name: fieldName,
+                            reason: 'Not a string',
                             location: location
                         }]);
                     }
