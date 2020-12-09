@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useHistory } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { selectGame, currentUserSelector, selectQuestionsForGame, selectAnswersForQuestion } from '../redux/selectors';
-import { fetchGames, fetchQuestionsForGame, deleteAnswer, createAnswer, createQuestion } from '../redux/actions';
+import { fetchGames, fetchQuestionsForGame, deleteAnswer, createAnswer, createQuestion, createRoom } from '../redux/actions';
 
 const answerStyle = {
     marginBottom: '0.5rem'
@@ -95,6 +95,7 @@ export default function EditGame(props) {
     let questions = useSelector(selectQuestionsForGame(id));
     const dispatch = useDispatch();
     let [showNewQuestionForm, setShowNewQuestionForm] = useState(false);
+    let history = useHistory();
 
 
 
@@ -136,6 +137,10 @@ export default function EditGame(props) {
             <NewQuestion game={game} show={showNewQuestionForm} />
 
             }
+
+            <div>
+                <button className="btn btn-primary" onClick={ () => dispatch(createRoom(id, roomId => history.push('/rooms/' +roomId)))}>Start</button>
+            </div>
             
         </div>
     )

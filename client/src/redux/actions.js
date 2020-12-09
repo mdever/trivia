@@ -3,14 +3,7 @@ import { CREATE_USER, CREATE_ROOM, ADD_USER_TO_ROOM, NEW_USER_RESPONSE,
          FETCH_GAMES_ERROR, FETCH_GAMES, FETCH_QUESTIONS_SUCCESS, LOGIN_USER_SUCCESS,
          LOGIN_USER_ERROR, DELETE_ANSWER_SUCCESS, DELETE_ANSWER_ERROR,
          CREATE_ANSWER_ERROR, CREATE_ANSWER_SUCCESS, CREATE_QUESTION_SUCCESS,
-         CREATE_QUESTION_ERROR, LOGIN_ERROR } from './actionTypes';
-
-export const createRoom = name => ({
-    type: CREATE_ROOM,
-    payload: {
-        name
-    }
-})
+         CREATE_QUESTION_ERROR, LOGIN_ERROR, CREATE_ROOM_SUCCESS, CREATE_ROOM_ERROR } from './actionTypes';
 
 export const newUserError = (code, message) => ({
     type: NEW_USER_ERROR,
@@ -251,6 +244,33 @@ export function createAnswer(questionId, answerText, correct) {
         } catch (error) {
             dispatch({type: CREATE_ANSWER_ERROR, payload: error.message});
         }
+    }
+}
+
+export function createRoom(gameId, thenRouteToRoom) {
+    return async function(dispatch, getState) {
+
+        let token = getState().users.currentUser.token;
+
+        let res = await fetch('/rooms', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ gameId })
+        });
+
+        if (res.status != 200) {
+            dispatch({type: CREATE_ROOM_ERROR, payload: {reason: 'Received non-200 response code'}});
+            return;
+        }
+
+        let room = await res.json();
+
+        dispatch({type: CREATE_ROOM_SUCCESS, payload: {room}});
+
+        thenRouteToRoom(room.code);
     }
 }
 

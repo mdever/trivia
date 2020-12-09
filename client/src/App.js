@@ -6,9 +6,9 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import NewPlayer from './components/NewPlayer';
 import EditGame from './components/EditGame';
+import Room from './components/Room';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { createNewRoom } from './redux/reducers/rooms';
 import { BrowserRouter as Router, Switch, Route, useHistory } from 'react-router-dom';
 import { createNewUser } from './redux/reducers/users';
 import { login, logout } from './redux/actions';
@@ -35,10 +35,6 @@ function App() {
       then();
     }
 
-  }
-
-  function createRoom() {
-    dispatch(createNewRoom('test'));
   }
 
   const setAppLoading = () => {
@@ -70,6 +66,9 @@ function App() {
                 </Route>
                 <Route path="/games/:id">
                   <EditGame />
+                </Route>
+                <Route path="/rooms/:code">
+                  <Room />
                 </Route>
               </Switch>
 

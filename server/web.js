@@ -198,7 +198,7 @@ module.exports = function(app) {
         console.log(error);
       }
 
-      if (a.answers) {
+      if (q.answers) {
         for (let a of q.answers) {
           const answer = Answer.build({
             answer: a.answer,
@@ -545,6 +545,8 @@ module.exports = function(app) {
 
       wsController.createRoomServer(room.id);
 
-      return {...room.dataValues}
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.write(JSON.stringify(room.dataValues));
+      res.end();
     });
 }
