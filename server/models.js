@@ -96,6 +96,7 @@ module.exports = function(sequelize) {
             },
             winner: {
                 type: DataTypes.INTEGER,
+                allowNull: true,
                 references: {
                     model: User,
                     key: 'id'

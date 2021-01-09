@@ -50,6 +50,7 @@ async function main() {
     console.log('Trivia Server app is now listening');
   });
 
+
   wsController.set(server);
 }
 

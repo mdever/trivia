@@ -1,5 +1,6 @@
 const { BehaviorSubject } = require('rxjs');
 const WebSocket = require('ws');
+const url = require('url');
 
 let instance;
 
@@ -7,7 +8,19 @@ function WSController(initialValue) {
     const self = this;
     
     self.nodeServerSubject = new BehaviorSubject(initialValue);
-    self.nodeServerSubject.subscribe(server => console.log('I have received server:\n' + JSON.stringify(server)));
+    self.nodeServerSubject.subscribe(server => {
+        if (!server) return;
+        server.on('upgrade', function upgrade(request, socket, head) {
+            const pathname = url.parse(request.url).pathname.slice(1);
+
+            if (self.servers[pathname]) {
+                const wss = self.servers[pathname];
+                wss.handleUpgrade(request, socket, head, function done(ws) {
+                    wss.emit('connection', ws, request);
+                })
+            }
+        });
+    });
     
     self.servers = {};
 
@@ -23,17 +36,17 @@ function WSController(initialValue) {
         return self.nodeServerSubject.subscribe(subscriber);
     }
 
-    self.createRoomServer = (roomId) => {
+    self.createRoomServer = (roomCode) => {
         console.log('creating room');
-        const wss = new WebSocket.Server({
-            server: self.nodeServerSubject.value
-        });
+        const wss = new WebSocket.Server({ noServer: true });
 
-        self.servers[roomId] = wss;
+        self.servers[roomCode] = wss;
 
         wss.on('connection', (ws) => {
-            ws.on('connection', (message) => {
-                console.log('received message');
+            console.log('Room ' + roomCode + ' has received new connection');
+            ws.send("Thanks for joining room " + roomCode);
+            ws.on('message', (message) => {
+                console.log('received message: ' + message);
                 ws.send('I heard your message: ' + message + '.');
             });
         });

@@ -536,17 +536,23 @@ module.exports = function(app) {
 
       const code = utils.roomCode();
 
-      const room = await Room.create({
-        code
-      });
+      let room;
+      try {
+        room = await Room.create({
+          gameId,
+          code
+        });
+        await game.addRoom(room);
+        await room.setGame(game);
+      } catch (error) {
+        console.log(error);
+        return;
+      }
 
-      await game.addRoom(room);
-      await room.setGame(game);
-
-      wsController.createRoomServer(room.id);
+      wsController.createRoomServer(code);
 
       res.writeHead(200, {'Content-Type': 'application/json'});
-      res.write(JSON.stringify(room.dataValues));
+      res.write(JSON.stringify({...room.dataValues, href: 'wss://localhost:8080/' + code }));
       res.end();
     });
 }
