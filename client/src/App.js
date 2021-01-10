@@ -61,9 +61,6 @@ function App() {
                   :  <HomePage />
                   }
                 </Route>
-                <Route path="/rooms/:id">
-                  
-                </Route>
                 <Route path="/games/:id">
                   <EditGame />
                 </Route>

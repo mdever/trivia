@@ -44,11 +44,18 @@ function WSController(initialValue) {
 
         wss.on('connection', (ws) => {
             console.log('Room ' + roomCode + ' has received new connection');
-            ws.send("Thanks for joining room " + roomCode);
             ws.on('message', (message) => {
                 console.log('received message: ' + message);
                 ws.send('I heard your message: ' + message + '.');
+                wss.clients.forEach(client => {
+                    client.send("message received on server: " + message);
+                })
             });
+            wss.clients.forEach(client => {
+                client.send(JSON.stringify({event: 'PLAYER_ADDED'}))
+            });
+            ws.send("Thanks for joining room " + roomCode);
+            
         });
     }
 }
