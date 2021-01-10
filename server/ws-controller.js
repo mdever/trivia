@@ -14,7 +14,7 @@ function WSController(initialValue) {
             const pathname = url.parse(request.url).pathname.slice(1);
 
             if (self.servers[pathname]) {
-                const wss = self.servers[pathname];
+                const wss = self.servers[pathname].wss;
                 wss.handleUpgrade(request, socket, head, function done(ws) {
                     wss.emit('connection', ws, request);
                 })
@@ -36,14 +36,27 @@ function WSController(initialValue) {
         return self.nodeServerSubject.subscribe(subscriber);
     }
 
+    self.getRoom = (code) => {
+        return self.servers[code];
+    }
+
     self.createRoomServer = (roomCode) => {
         console.log('creating room');
         const wss = new WebSocket.Server({ noServer: true });
 
-        self.servers[roomCode] = wss;
+        self.servers[roomCode] = {wss, players: []};
 
-        wss.on('connection', (ws) => {
+        wss.on('connection', (ws, request) => {
             console.log('Room ' + roomCode + ' has received new connection');
+            const query = url.parse(request.url).query;
+            const params = {};
+            query.split(';').forEach(kv => {
+                kv = kv.split('=');
+                params[kv[0]] = kv[1];
+            });
+            const userId = params.user;
+            self.getRoom(roomCode).players.push(userId);
+
             ws.on('message', (message) => {
                 console.log('received message: ' + message);
                 ws.send('I heard your message: ' + message + '.');
@@ -51,11 +64,12 @@ function WSController(initialValue) {
                     client.send("message received on server: " + message);
                 })
             });
+            ws.send(JSON.stringify({event: 'PLAYERS_LIST', payload: { users: self.getRoom(roomCode).players }}));
             wss.clients.forEach(client => {
-                client.send(JSON.stringify({event: 'PLAYER_ADDED'}))
-            });
-            ws.send("Thanks for joining room " + roomCode);
-            
+                if (client !== ws) {
+                    client.send(JSON.stringify({event: 'NEW_PLAYER', payload: {user: userId}}));
+                }
+            });            
         });
     }
 }
