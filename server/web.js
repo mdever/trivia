@@ -66,6 +66,7 @@ module.exports = function(app) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.write(JSON.stringify({type: 'AUTHENTICATION_ERROR', message: 'Could not validate username/password'}));
       res.end();
+      return;
     }
 
     const match = await bcrypt.compare(password, user.pwHash);

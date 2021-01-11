@@ -268,7 +268,7 @@ export function createRoom(gameId, thenRouteToRoom) {
 
         let room = await res.json();
 
-        dispatch({type: CREATE_ROOM_SUCCESS, payload: {room}});
+        dispatch({type: CREATE_ROOM_SUCCESS, payload: {room, isOwner: true}});
 
         thenRouteToRoom(room.code);
     }

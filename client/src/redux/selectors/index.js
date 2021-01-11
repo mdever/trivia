@@ -45,3 +45,9 @@ export const selectAnswersForQuestion = questionId => {
             
     )
 }
+
+export const selectCurrentRoom = state => state.rooms.currentRoom;
+export const isOwnerSelector = createSelector(
+    selectCurrentRoom,
+    (room) => room && room.isOwner
+)

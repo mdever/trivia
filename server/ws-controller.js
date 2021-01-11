@@ -4,6 +4,28 @@ const url = require('url');
 
 let instance;
 
+function PlayersJoiningState(wss) {
+    const self = this;
+    self.wss = wss;
+
+    self.processEvent = (ev, sender = null) => {
+        if (ev.event === 'PLAYER_JOINED') {
+            wss.clients.forEach(client => {
+                if (sender && sender === client)
+                    return;
+
+                client.send(JSON.stringify({event: 'PLAYER_JOINED', payload: { user: ev.payload.user }}))
+            }
+        }
+    }
+}
+
+function GameStateMachine(wss) {
+    const self = this;
+    self.wss = wss;
+    self.activeState = new PlayersJoiningState(wss);
+}
+
 function WSController(initialValue) {
     const self = this;
     
@@ -44,7 +66,7 @@ function WSController(initialValue) {
         console.log('creating room');
         const wss = new WebSocket.Server({ noServer: true });
 
-        self.servers[roomCode] = {wss, players: []};
+        self.servers[roomCode] = {wss, players: [], stateMachine: new GameStateMachine(wss)};
 
         wss.on('connection', (ws, request) => {
             console.log('Room ' + roomCode + ' has received new connection');
@@ -55,16 +77,16 @@ function WSController(initialValue) {
                 params[kv[0]] = kv[1];
             });
             const userId = params.user;
-            self.getRoom(roomCode).players.push(userId);
+            const room = self.getRoom(roomCode);
+
+            room.players.push(userId);
 
             ws.on('message', (message) => {
-                console.log('received message: ' + message);
-                ws.send('I heard your message: ' + message + '.');
                 wss.clients.forEach(client => {
                     client.send("message received on server: " + message);
                 })
             });
-            ws.send(JSON.stringify({event: 'PLAYERS_LIST', payload: { users: self.getRoom(roomCode).players }}));
+            ws.send(JSON.stringify({event: 'PLAYERS_LIST', payload: { users: room.players }}));
             wss.clients.forEach(client => {
                 if (client !== ws) {
                     client.send(JSON.stringify({event: 'NEW_PLAYER', payload: {user: userId}}));
