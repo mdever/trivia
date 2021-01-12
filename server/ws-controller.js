@@ -66,7 +66,7 @@ function WSController(initialValue) {
         console.log('creating room');
         const wss = new WebSocket.Server({ noServer: true });
 
-        self.servers[roomCode] = {wss, players: [], stateMachine: new GameStateMachine(wss)};
+        self.servers[roomCode] = {wss, owner: null, players: [], stateMachine: new GameStateMachine(wss)};
 
         wss.on('connection', (ws, request) => {
             console.log('Room ' + roomCode + ' has received new connection');
@@ -80,6 +80,8 @@ function WSController(initialValue) {
             const room = self.getRoom(roomCode);
 
             room.players.push(userId);
+            if (!room.owner) 
+                room.owner = userId;
 
             ws.on('message', (message) => {
                 wss.clients.forEach(client => {
