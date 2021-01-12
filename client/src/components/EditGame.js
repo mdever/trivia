@@ -72,7 +72,7 @@ export function EditQuestion(props) {
     )
 }
 
-function NewQuestion({show, game}) {
+function NewQuestion({show, game, hide}) {
 
     const dispatch = useDispatch();
     let [questionText, setQuestionText] = useState('');
@@ -84,7 +84,7 @@ function NewQuestion({show, game}) {
             <input type="text" name="newQuestionText" id="new-question-text" onChange={ (event) => setQuestionText(event.target.value) } />
             <label htmlFor="new-question-hint">Hint: </label>
             <input type="text" name="newQuestionHint" id="new-question-hint" onChange={ event => setHint(event.target.value) } />
-            <button onClick={() => dispatch(createQuestion(game.id, questionText, hint))} className="btn btn-primary" style={{float: 'right'}}>Save</button>
+            <button onClick={() => { dispatch(createQuestion(game.id, questionText, hint)); hide();}} className="btn btn-primary" style={{float: 'right'}}>Save</button>
         </div>
     );
 }
@@ -134,7 +134,7 @@ export default function EditGame(props) {
 
             { showNewQuestionForm &&
             
-            <NewQuestion game={game} show={showNewQuestionForm} />
+            <NewQuestion game={game} show={showNewQuestionForm} hide={() => setShowNewQuestionForm(false)}/>
 
             }
 

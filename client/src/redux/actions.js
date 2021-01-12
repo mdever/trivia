@@ -127,7 +127,7 @@ export function createQuestion(gameId, questionText, hint) {
                 return;
             }
 
-            let body = res.json();
+            let body = await res.json();
             dispatch({type: CREATE_QUESTION_SUCCESS, payload: body});
 
 
