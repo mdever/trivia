@@ -15,7 +15,7 @@ function PlayersJoiningState(wss) {
                     return;
 
                 client.send(JSON.stringify({event: 'PLAYER_JOINED', payload: { user: ev.payload.user }}))
-            }
+            });
         }
     }
 }
