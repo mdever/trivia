@@ -553,7 +553,7 @@ module.exports = function(app) {
       wsController.createRoomServer(code);
 
       res.writeHead(200, {'Content-Type': 'application/json'});
-      res.write(JSON.stringify({...room.dataValues, href: 'wss://localhost:8080/' + code }));
+      res.write(JSON.stringify({...room.dataValues, name: game.name, href: 'wss://localhost:8080/' + code }));
       res.end();
     });
 }

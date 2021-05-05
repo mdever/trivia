@@ -1,6 +1,8 @@
 const { BehaviorSubject } = require('rxjs');
 const WebSocket = require('ws');
 const url = require('url');
+const {User, Room, UserSessions, Question, Answer, Game, AuthToken} = require('./models')()
+
 
 let instance;
 
@@ -15,7 +17,7 @@ function PlayersJoiningState(wss) {
                     return;
 
                 client.send(JSON.stringify({event: 'PLAYER_JOINED', payload: { user: ev.payload.user }}))
-            }
+            })
         }
     }
 }
@@ -67,6 +69,7 @@ function WSController(initialValue) {
         const wss = new WebSocket.Server({ noServer: true });
 
         self.servers[roomCode] = {wss, owner: null, players: [], stateMachine: new GameStateMachine(wss)};
+        let room = self.servers[roomCode];
 
         wss.on('connection', (ws, request) => {
             console.log('Room ' + roomCode + ' has received new connection');
@@ -78,22 +81,50 @@ function WSController(initialValue) {
             });
             const userId = params.user;
             const room = self.getRoom(roomCode);
-
-            room.players.push(userId);
-            if (!room.owner) 
-                room.owner = userId;
-
-            ws.on('message', (message) => {
-                wss.clients.forEach(client => {
-                    client.send("message received on server: " + message);
+            Room.findOne({ where: { code: roomCode }}).then(roomModel => {
+                Game.findByPk(roomModel.gameId).then(game => {
+                    ws.send(JSON.stringify({event: 'GAME_NAME', payload: {name: game.name}}))
                 })
-            });
+            })
+
+            if (![].includes(userId)) {
+                room.players.push(userId);
+            }
+            
+            if (!room.owner) {
+                room.owner = userId;
+            }
+
             ws.send(JSON.stringify({event: 'PLAYERS_LIST', payload: { users: room.players }}));
+
             wss.clients.forEach(client => {
                 if (client !== ws) {
                     client.send(JSON.stringify({event: 'NEW_PLAYER', payload: {user: userId}}));
                 }
-            });            
+            });
+
+            ws.on('message', (message) => {
+                console.log('Server received message: ');
+                console.log(message);
+                console.log('Echoing to clients...');
+                
+                let data = JSON.parse(message);
+                if (data.event === 'START_GAME') {
+                    wss.clients.forEach(client => {
+                        if (client != ws) {
+                            client.send(JSON.stringify({event: 'START_GAME'}));
+                        }
+                    })
+
+                    return;
+                }
+
+                wss.clients.forEach(client => {
+                    if (client != ws) {
+                        client.send(message);
+                    }
+                })
+            });
         });
     }
 }

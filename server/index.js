@@ -4,9 +4,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const config = require('dotenv').config();
 const { Sequelize, DataTypes, Op } = require('sequelize');
-const { WSController } = require('./ws-controller');
-
-const wsController = WSController.getInstance();
 
 console.log('Attempting to connect to database with properties:');
 console.log(config);
@@ -17,6 +14,8 @@ const sequelize = new Sequelize('main', config.SQLITE_USER, config.SQLITE_PASSWO
   logging: true
 });
 const models = require('./models')(sequelize);
+const { WSController } = require('./ws-controller');
+const wsController = WSController.getInstance();
 
 const app = express();
 app.use(bodyParser.json());
