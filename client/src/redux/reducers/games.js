@@ -1,4 +1,4 @@
-import { NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR } from "../actionTypes"
+import { NEW_GAME_SUCCESS, NEW_GAME_ERROR, FETCH_GAMES_SUCCESS, FETCH_GAMES_ERROR, CREATE_ROOM_SUCCESS } from "../actionTypes"
 
 const initialState = {
     games: [],
@@ -35,6 +35,13 @@ export function gamesReducer(state = initialState, action) {
                 error: action.payload
             }
         }
+        case CREATE_ROOM_SUCCESS:
+            return {
+                ...state,
+                currentGame: {
+                    name: action.state
+                }
+            }
         default: {
             return state;
         }

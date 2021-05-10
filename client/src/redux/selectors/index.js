@@ -51,3 +51,9 @@ export const isOwnerSelector = createSelector(
     selectCurrentRoom,
     (room) => room && room.isOwner
 )
+
+export const selectCurrentGame = state => state.games.currentGame;
+export const selectCurrentGameName = createSelector(
+    selectCurrentGame,
+    (game) => game ? game.name : null
+)

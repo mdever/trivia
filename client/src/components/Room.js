@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { currentUserSelector, isOwnerSelector } from '../redux/selectors';
+import { currentUserSelector, isOwnerSelector, selectCurrentGameName } from '../redux/selectors';
+import OwnerRoom from './OwnerRoom';
+import PlayerRoom from './PlayerRoom';
 
 
 export default function Room(props) {
@@ -9,15 +11,21 @@ export default function Room(props) {
     let { code } = useParams();
     let currentUser = useSelector(currentUserSelector);
     let isOwner = useSelector(isOwnerSelector);
-    let ws;
+    const [ ws, setWs] = useState(null);
     const [ allPlayers, setAllPlayers ] = useState([]);
+    const [ gameInSession, setGameInSession ] = useState(false);
+    const [ gameName, setGameName ] = useState(null);
 
     function startGame() {
-        ws.send(JSON.stringify({event: 'START_GAME'}))
+        ws.send(JSON.stringify({event: 'START_GAME'}));
+        setGameInSession(true);
     }
 
     useEffect(() => {
-        ws = new WebSocket('ws://localhost:8080/' + code + '?user=' + currentUser.username);
+        if (ws == null) {
+            setWs(new WebSocket('ws://45.55.33.7/' + code + '?user=' + currentUser.username));
+            return;
+        }
         ws.onopen = function () {
             console.log('Connected');
         }
@@ -31,14 +39,32 @@ export default function Room(props) {
                 }
                 case 'NEW_PLAYER': {
                     setAllPlayers(prevState => ([...prevState, data.payload.user]));
+                    break;
+                }
+                case 'GAME_STARTED': {
+                    setGameInSession(true);
+                    break;
+                }
+                case 'GAME_NAME': {
+                    setGameName(data.payload.name);
+                    break;
                 }
             }
         }
-    }, [code]);
+    }, [code, ws]);
+
+    let roomType = isOwner ? <OwnerRoom ws={ws} code={code} /> : <PlayerRoom ws={ws} code={code} />
 
     return (
         <div>
-            <div>In room now</div>
+            <div>
+                <h1>{gameName}</h1>
+            </div>
+            
+            { ws &&
+                roomType
+            }
+
             <div>
             { 
             allPlayers.map(player =>
@@ -46,9 +72,7 @@ export default function Room(props) {
                 )
             }
             </div>
-            { isOwner &&
-                <button onClick={startGame}>Start</button>
-            }
+
             
         </div>
     );
