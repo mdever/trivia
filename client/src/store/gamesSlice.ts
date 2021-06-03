@@ -13,16 +13,12 @@ const gamesEntityAdapter = createEntityAdapter<GameEntity>()
 export const fetchGames = createAsyncThunk<GameEntity[]>(
     'games/fetchGames',
     async (_: string | void, thunkAPI) => {
-        try {
-            const res = await axios.get('http://localhost:3000/games', {
-                headers: {
-                    'Authorization': 'Bearer d8cb9f608df83d44286651f23c36b18e22480f1cc8f83e154cf66ed56aea3aa5d122cf25730e905eee2688ccc8ffe9c0cc737ec9377de760eb99eb4a6537112718e0f692114a13eb63f6c4843dbfb0ac4cff644969a77e6833881df34e26d25712c264abc6c8232d31a38b125bb19f50367637a124fc7abf201900845326caed'
-                }
-            })
-            return res.data.games;
-        } catch (err: any) {
-            thunkAPI.rejectWithValue(err);
-        }
+        const res = await axios.get('http://localhost:3000/games', {
+            headers: {
+                'Authorization': 'Bearer d8cb9f608df83d44286651f23c36b18e22480f1cc8f83e154cf66ed56aea3aa5d122cf25730e905eee2688ccc8ffe9c0cc737ec9377de760eb99eb4a6537112718e0f692114a13eb63f6c4843dbfb0ac4cff644969a77e6833881df34e26d25712c264abc6c8232d31a38b125bb19f50367637a124fc7abf201900845326caed'
+            }
+        })
+        return res.data.games;
     });
 
 const gamesSlice = createSlice({
@@ -41,9 +37,9 @@ const gamesSlice = createSlice({
             state.error = false;
             gamesEntityAdapter.removeAll(state);
         });
-        builder.addCase(fetchGames.rejected, (state, action: PayloadAction<any>) => {
+        builder.addCase(fetchGames.rejected, (state, err: SerializedError | any) => {
             console.log('Error fetching games');
-            console.log(action.payload);
+            console.log(err);
             state.loading = false;
             state.error = true;
             gamesEntityAdapter.removeAll(state);
