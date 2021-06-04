@@ -1,35 +1,37 @@
 import { useSelector } from "react-redux"
 import { isAuthenticated } from "../store/userSlice"
 import CSS from 'csstype';
+import styled from "styled-components";
 
-const headerStyles: CSS.Properties = {
-    maxHeight: '200px', 
-};
+const StyledHeader = styled.header`
+    max-height: 200px;
+    text-align: center;
+    padding-bottom: 2rem;
 
-const navStyles: CSS.Properties = {
+    ul {
+        list-style: none;
 
-}
-
-const ulStyles: CSS.Properties = {
-    listStyle: 'none',
-};
-
-const liStyles: CSS.Properties = {
-    display: 'inline',
-    marginRight: '1rem',
-}
+        li {
+            display: inline-block;
+            margin-right: 1em;
+        }
+    }
+`;
 
 export default function Header() {
     const authenticated = useSelector(isAuthenticated);
 
     return (
-        <header style={headerStyles}>
-            <ul style={ulStyles}>
-                <li style={liStyles}>
+        <StyledHeader>
+            <h1>Trivia</h1>
+            <ul>
+                <li>
                     First
                 </li>
-                <li style={liStyles}>Second</li>
+                <li>
+                    Second
+                </li>
             </ul>
-        </header>
+        </StyledHeader>
     )
 }

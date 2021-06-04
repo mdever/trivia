@@ -4,14 +4,13 @@ import {
   Route,
   Link
  } from 'react-router-dom';
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { useSelector } from 'react-redux';
 import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
 import { isAuthenticated } from './store/userSlice';
 import Header from './components/Header';
+import Footer from './components/Footer';
+import UnauthenticatedHomePage from './pages/UnauthenticatedHomePage';
 
 function App() {
   const authenticated = useSelector(isAuthenticated);
@@ -19,28 +18,28 @@ function App() {
   if (authenticated) {
     homePage = <HomePage />;
   } else {
-    homePage = <LoginPage />
+    homePage = <UnauthenticatedHomePage />
   }
 
   return (
     <div className="App background-blue">
       <Router>
         <Header />
-        <Switch>
-          <Route path="/">
-            { homePage }
-          </Route>
-          <Route path="/games">
+        <div id="page-container">
+          <Switch>
+            <Route path="/">
+              { homePage }
+            </Route>
+            <Route path="/games">
 
-          </Route>
-          <Route path="">
+            </Route>
+            <Route path="">
 
-          </Route>
-        </Switch>
+            </Route>
+          </Switch>
+        </div>
+        <Footer />
       </Router>
-      <footer>
-        Space for footer
-      </footer>
     </div>
   );
 }
