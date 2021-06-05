@@ -11,6 +11,8 @@ import { isAuthenticated } from './store/userSlice';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import UnauthenticatedHomePage from './pages/UnauthenticatedHomePage';
+import { Container } from '@material-ui/core';
+import RegisterPage from './pages/RegisterPage';
 
 function App() {
   const authenticated = useSelector(isAuthenticated);
@@ -22,22 +24,22 @@ function App() {
   }
 
   return (
-    <div className="App background-blue">
+    <div className="App">
       <Router>
         <Header />
-        <div id="page-container">
+        <Container>
           <Switch>
-            <Route path="/">
+            <Route exact={true} path="/">
               { homePage }
+            </Route>
+            <Route path="/register">
+              <RegisterPage />
             </Route>
             <Route path="/games">
 
             </Route>
-            <Route path="">
-
-            </Route>
           </Switch>
-        </div>
+        </Container>
         <Footer />
       </Router>
     </div>

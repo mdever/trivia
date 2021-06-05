@@ -29,28 +29,26 @@ export default function UnauthenticatedHomePage() {
     }
 
     return (
-        <Container>
-            <Grid container spacing={3} justify="center">
-                <Grid xs={3}>
-                    <StyledPaper elevation={3}>
-                        <Grid container spacing={4} justify="center">
-                            <Grid xs={6}>
-                                <h3>Login</h3>
-                                <form>
-                                    <InputLabel htmlFor="username">Username</InputLabel>
-                                    <Input type="text" name="username" onChange={(e) => setUsername(e.target.value)}/>
-                                    <InputLabel htmlFor="password">Password</InputLabel>
-                                    <Input type="password" name="password" onChange={(e) => setPassword(e.target.value)}/>
-                                    <Button variant="contained" color="primary" type="button" onClick={loginUser}>Login</Button>
-                                </form>
-                            </Grid>
+        <Grid container spacing={3} justify="center">
+            <Grid xs={3}>
+                <StyledPaper elevation={3}>
+                    <Grid container spacing={4} justify="center">
+                        <Grid xs={6}>
+                            <h3>Login</h3>
+                            <form>
+                                <InputLabel htmlFor="username">Username</InputLabel>
+                                <Input type="text" name="username" onChange={(e) => setUsername(e.target.value)}/>
+                                <InputLabel htmlFor="password">Password</InputLabel>
+                                <Input type="password" name="password" onChange={(e) => setPassword(e.target.value)}/>
+                                <Button variant="contained" color="primary" type="button" onClick={loginUser}>Login</Button>
+                            </form>
                         </Grid>
-                    </StyledPaper>
-                    <aside>
-                        Or <Link to="/register">Signup</Link>
-                    </aside>
-                </Grid>
+                    </Grid>
+                </StyledPaper>
+                <aside>
+                    Or <Link to="/register">Signup</Link>
+                </aside>
             </Grid>
-        </Container>
+        </Grid>
     );
 }

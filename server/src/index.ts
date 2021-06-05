@@ -5,6 +5,14 @@ import { tokenToString } from 'typescript';
 import { createNewGame, getGamesByUserId } from './db/games';
 import { authenticate, checkForSessionAndFetchUser, createNewUser } from './db/users';
 import { CreateGameRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
+import multer from 'multer';
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 16 * 1024 * 1024
+    }
+});
 
 const app = express();
 app.use(express.json());
@@ -151,7 +159,23 @@ app.get('/games', authenticateUser, async (req: Request, res: Response) => {
             });
     }
     
-})
+});
+
+app.post('/users/avatar', authenticateUser, upload.single('avatar'), async (req: Request, res: Response) => {
+    const { username, userid } = res.locals;
+    if (!req['file']) {
+        res.status(400)
+            .send('A PNG file is required');
+        
+        return;
+    }
+
+    console.log('got file contents');
+    console.log(req['file']?.buffer);
+
+    res.status(201)
+        .send('Saved avatar');
+});
 
 app.listen(8080, () => {
     console.log('App is listening at http://localhost:8080');
