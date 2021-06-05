@@ -160,4 +160,8 @@ export const selectUserLoading = createSelector(
     selectUserSlice,
     (state: UserSliceState) => state.loading
 );
+export const selectToken = createSelector(
+    selectUserSlice,
+    (state: UserSliceState) => state.token
+);
 

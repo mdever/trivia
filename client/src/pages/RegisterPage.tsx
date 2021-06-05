@@ -3,7 +3,7 @@ import { Alert } from '@material-ui/lab'
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { Link, Router, useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { useAppDispatch } from "../store";
 import { registerNewUser, selectUserError, selectUserLoading } from "../store/userSlice";
 
