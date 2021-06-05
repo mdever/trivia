@@ -12,10 +12,11 @@ RUN node ./node_modules/.bin/tsc
 RUN cp -r ./dist/** ../app
 RUN cp -r ./node_modules/** ../app/node_modules
 WORKDIR /app
-RUN mkdir public
+RUN mkdir -p public
 WORKDIR /client
 RUN npm install
 RUN npm run build
-RUN cp -r ./build/** ../app/public
 WORKDIR ../app
+RUN cp -r ../client/build/** ./public
+RUN cp -r ../server/src/public/** ./public
 CMD node index.js

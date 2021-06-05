@@ -18,6 +18,7 @@ export default function ProfilePage() {
     const history = useHistory();
     const [file, setFile] = useState<File|null>();
     const [reloadCount, triggerReload] = useState(0);
+    const [useDefaultAvatar, setUseDefaultAvatar] = useState<boolean>(false);
     const token = useSelector(selectToken);
 
     if (!authenticated) {
@@ -47,6 +48,10 @@ export default function ProfilePage() {
           .catch(err => console.log(err));
     }
 
+    function fetchDefaultAvatar() {
+        setUseDefaultAvatar(true);
+    }
+
     return (
         <Grid container justify="center" spacing={3}>
             <Grid item xs={4}>
@@ -61,7 +66,7 @@ export default function ProfilePage() {
                                 username &&
                                 <div>
                                     <h5>Avatar</h5>
-                                    <img src={`/users/${username}/avatar?v=${reloadCount}`} style={{height: '80px'}}></img>
+                                    <img onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar?v=${reloadCount}`} style={{height: '80px'}}></img>
                                 </div>
                             }
                             <Input value="" type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>
