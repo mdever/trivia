@@ -2,6 +2,8 @@ import { useSelector } from "react-redux"
 import { isAuthenticated } from "../store/userSlice"
 import CSS from 'csstype';
 import styled from "styled-components";
+import { Link } from "react-router-dom";
+import { Button } from "@material-ui/core";
 
 const StyledHeader = styled.header`
     max-height: 200px;
@@ -18,7 +20,9 @@ const StyledHeader = styled.header`
     }
 `;
 
-export default function Header() {
+export type LogoutFunction = () => void
+
+export default function Header(props: { doLogout: LogoutFunction }) {
     const authenticated = useSelector(isAuthenticated);
 
     return (
@@ -32,6 +36,18 @@ export default function Header() {
                     Second
                 </li>
             </ul>
+            {
+                authenticated &&
+                <div>
+                    <Link to="/profile">Profile</Link>
+                </div>
+            }
+            {
+                authenticated &&
+                <div>
+                    <Button color="primary" onClick={props.doLogout}>Logout</Button>
+                </div>
+            }
         </StyledHeader>
     )
 }

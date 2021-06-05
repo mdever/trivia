@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from 'react-redux';
 
-import { Button, Container, Grid, Input, InputLabel, Paper } from '@material-ui/core';
+import { Button, Grid, Input, InputLabel, Paper } from '@material-ui/core';
 import styled from 'styled-components';
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+import { useAppDispatch } from "../store";
+import { authenticateUser } from "../store/userSlice";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 const StyledPaper = styled(Paper)`
     border-radius: 40px !important;
     min-height: 275px;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 
     form {
         margin-top: 2rem;
@@ -20,20 +23,25 @@ const StyledPaper = styled(Paper)`
 `;
 
 export default function UnauthenticatedHomePage() {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
+    const history = useHistory();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
     function loginUser() {
-        console.log(`Attempting authentication with user ${username} and password ${password}`);
+        dispatch(authenticateUser({username, password}))
+            .then(unwrapResult)
+            .then(result => {
+                history.push('/');
+            })
     }
 
     return (
         <Grid container spacing={3} justify="center">
-            <Grid xs={3}>
+            <Grid item xs={3}>
                 <StyledPaper elevation={3}>
-                    <Grid container spacing={4} justify="center">
-                        <Grid xs={6}>
+                    <Grid container justify="center">
+                        <Grid item xs={6}>
                             <h3>Login</h3>
                             <form>
                                 <InputLabel htmlFor="username">Username</InputLabel>

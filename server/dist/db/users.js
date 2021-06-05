@@ -31,7 +31,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkForSessionAndFetchUser = exports.authenticate = exports.createNewUser = exports.selectUserIdFromSession = void 0;
+exports.logout = exports.checkForSessionAndFetchUser = exports.authenticate = exports.createNewUser = exports.selectUserIdFromSession = void 0;
 const _1 = __importDefault(require("."));
 const crypto = __importStar(require("crypto"));
 const bcrypt = __importStar(require("bcrypt"));
@@ -72,10 +72,10 @@ function createNewUser(user) {
             const pwHash = yield bcrypt.hash(user.password, salt);
             const createdAt = (new Date()).toISOString();
             insertUser.run(user.username, salt, pwHash, createdAt, createdAt);
-            const { sessionid } = yield authenticate(user.username, user.password);
+            const { token } = yield authenticate(user.username, user.password);
             return {
                 username: user.username,
-                token: sessionid
+                token
             };
         }
         catch (err) {
@@ -101,6 +101,11 @@ function authenticate(username, password) {
                     reject(err);
                     return;
                 }
+                if (!row) {
+                    console.log(`Could not find user: ${username}`);
+                    reject(err);
+                    return;
+                }
                 const comparison = yield bcrypt.compare(password, row.pwHash);
                 if (!comparison) {
                     console.log('Invalid username password combination');
@@ -121,38 +126,50 @@ function authenticate(username, password) {
 }
 exports.authenticate = authenticate;
 function checkForSessionAndFetchUser(token) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve, reject) => {
-            exports.selectUserIdFromSession.get(token, (err, row) => {
+    return new Promise((resolve, reject) => {
+        exports.selectUserIdFromSession.get(token, (err, row) => {
+            if (err) {
+                console.log('Error finding session for session id');
+                console.log(err.message);
+                console.log(err.stack);
+                reject('No Session found');
+                return;
+            }
+            if (!row) {
+                console.log('Error finding session for session id');
+                reject('No Session found');
+                return;
+            }
+            const { userId } = row;
+            getUserById.get(userId, (err, row) => {
                 if (err) {
-                    console.log('Error finding session for session id');
+                    console.log(`Error finding user for user id ${userId}`);
                     console.log(err.message);
                     console.log(err.stack);
-                    reject('No Session found');
+                    reject('No user found for session');
                     return;
                 }
-                if (!row) {
-                    console.log('Error finding session for session id');
-                    reject('No Session found');
-                    return;
-                }
-                const { userId } = row;
-                getUserById.get(userId, (err, row) => {
-                    if (err) {
-                        console.log(`Error finding user for user id ${userId}`);
-                        console.log(err.message);
-                        console.log(err.stack);
-                        reject('No user found for session');
-                        return;
-                    }
-                    resolve({
-                        userid: row.id,
-                        username: row.username
-                    });
+                resolve({
+                    userid: row.id,
+                    username: row.username
                 });
             });
         });
     });
 }
 exports.checkForSessionAndFetchUser = checkForSessionAndFetchUser;
+function logout(token) {
+    return new Promise((resolve, reject) => {
+        _1.default.run('DELETE FROM AuthTokens WHERE value = ?', token, function (err) {
+            if (err) {
+                console.log(`Could not delete user session ${token}`);
+                reject(err);
+                return;
+            }
+            console.log(`Removed user session ${token}, rowId: ${this.lastID}`);
+            resolve(true);
+        });
+    });
+}
+exports.logout = logout;
 //# sourceMappingURL=users.js.map

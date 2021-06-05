@@ -2,19 +2,24 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  useHistory
  } from 'react-router-dom';
 import './App.css';
 import { useSelector } from 'react-redux';
 import HomePage from './pages/HomePage';
-import { isAuthenticated } from './store/userSlice';
+import { isAuthenticated, logoutAction, setUser } from './store/userSlice';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import UnauthenticatedHomePage from './pages/UnauthenticatedHomePage';
 import { Container } from '@material-ui/core';
 import RegisterPage from './pages/RegisterPage';
+import { useEffect } from 'react';
+import { useAppDispatch } from './store';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
+  const dispatch = useAppDispatch();
+  const history = useHistory();
   const authenticated = useSelector(isAuthenticated);
   let homePage;
   if (authenticated) {
@@ -23,10 +28,29 @@ function App() {
     homePage = <UnauthenticatedHomePage />
   }
 
+  useEffect(() => {
+    const username = window.localStorage.getItem('username');
+    const token = window.localStorage.getItem('token');
+
+    if (username && token) {
+      dispatch(setUser({username, token}));
+    } else {
+      window.localStorage.removeItem('username');
+      window.localStorage.removeItem('token');
+    }
+  }, []);
+
+  function logout() {
+    dispatch(logoutAction())
+      .then(() => {
+        history && history.push('/');
+      })
+  }
+
   return (
     <div className="App">
       <Router>
-        <Header />
+        <Header doLogout={logout}/>
         <Container>
           <Switch>
             <Route exact={true} path="/">
@@ -37,6 +61,9 @@ function App() {
             </Route>
             <Route path="/games">
 
+            </Route>
+            <Route path="/profile">
+              <ProfilePage />
             </Route>
           </Switch>
         </Container>

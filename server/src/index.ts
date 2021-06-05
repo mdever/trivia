@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { emitWarning } from 'process';
 import { tokenToString } from 'typescript';
 import { createNewGame, getGamesByUserId } from './db/games';
-import { authenticate, checkForSessionAndFetchUser, createNewUser } from './db/users';
+import { authenticate, checkForSessionAndFetchUser, createNewUser, logout } from './db/users';
 import { CreateGameRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
 import multer from 'multer';
 
@@ -28,9 +28,9 @@ app.post('/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<Ne
         res.status(200)
             .send({
                 status: 'success',
+                token: result.token,
                 user: {
-                    username: userRequest.username,
-                    token: result.token
+                    username: userRequest.username
                 }
             });
     } catch (err) {
@@ -112,8 +112,28 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
             });
         return;
     }
-    
 }
+
+app.delete('/sessions', authenticateUser, async (req: Request, res: Response) => {
+    const { username, userid } = res.locals;
+
+    const token = req.header('Authorization').slice(7);
+    try {
+        logout(token);
+        res.status(204).send();
+        return;
+    } catch (err) {
+        console.log(`Web Layer: Could not log out user ${username}`);
+        console.log(err);
+        res.status(500)
+            .send({
+                code: 500,
+                error: 'Deletion Error',
+                errorMessage: 'Could not log out user'
+            });
+    }
+});
+
 
 app.post('/games', authenticateUser, async (req: Request<{}, {}, CreateGameRequest>, res: Response) => {
     const { username, userid } = res.locals

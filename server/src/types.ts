@@ -7,9 +7,9 @@ export type LoginRequest = NewUserRequest;
 
 export interface NewUserResponseSuccess {
     status: 'success',
+    token: string,
     user: {
         username: string,
-        token: string
     }
 }
 

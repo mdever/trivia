@@ -49,11 +49,11 @@ export async function createNewUser(user: NewUserRequest) {
 
         insertUser.run(user.username, salt, pwHash, createdAt, createdAt);
 
-        const { sessionid } = await authenticate(user.username, user.password);
+        const { token } = await authenticate(user.username, user.password);
 
         return {
             username: user.username,
-            token: sessionid 
+            token
         };
 
     } catch (err) {
@@ -80,6 +80,11 @@ export async function authenticate(username: string, password: string): Promise<
                 reject(err);
                 return;
             }
+            if (!row) {
+                console.log(`Could not find user: ${username}`);
+                reject(err);
+                return;
+            }
     
             const comparison = await bcrypt.compare(password, row.pwHash);
             if (!comparison) {
@@ -101,7 +106,7 @@ export async function authenticate(username: string, password: string): Promise<
     });
 }
 
-export async function checkForSessionAndFetchUser(token: string): Promise<{userid: string, username: string}> {
+export function checkForSessionAndFetchUser(token: string): Promise<{userid: string, username: string}> {
     return new Promise((resolve, reject) => {
         selectUserIdFromSession.get(token, (err, row) => {
             if (err) {
@@ -133,5 +138,20 @@ export async function checkForSessionAndFetchUser(token: string): Promise<{useri
                 });
             })
         })
+    });
+}
+
+export function logout(token: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM AuthTokens WHERE value = ?', token, function (err) {
+            if (err) {
+                console.log(`Could not delete user session ${token}`);
+                reject(err);
+                return;
+            }
+
+            console.log(`Removed user session ${token}, rowId: ${this.lastID}`);
+            resolve(true);
+        });
     });
 }
