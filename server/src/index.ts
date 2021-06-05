@@ -3,10 +3,12 @@ import { Request, Response } from 'express';
 import { emitWarning } from 'process';
 import { tokenToString } from 'typescript';
 import { createNewGame, getGamesByUserId } from './db/games';
-import { authenticate, checkForSessionAndFetchUser, createNewUser, logout } from './db/users';
+import { authenticate, checkForSessionAndFetchUser, createNewUser, fetchAvatarByUsername, logout, updateAvatarForUser } from './db/users';
 import { CreateGameRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
+import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import process from 'process';
+
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -20,6 +22,7 @@ if (process.env.NODE_ENV) {
     app.use(express.static('public'));
 }
 
+app.use(cookieParser());
 app.use(express.json());
 
 app.get('/', async (req: Request, res: Response) => {
@@ -30,6 +33,7 @@ app.post('/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<Ne
     const userRequest: NewUserRequest = req.body;
     try {
         const result = await createNewUser(userRequest);
+        res.cookie('session', result.token);
         res.status(200)
             .send({
                 status: 'success',
@@ -59,6 +63,7 @@ app.post('/sessions', async (req: Request<{}, {}, LoginRequest>, res) => {
 
     try {
         const authenticationResult = await authenticate(username, password);
+        res.cookie('session', authenticationResult.token);
         res.status(200)
             .send({
                 token: authenticationResult.token,
@@ -103,6 +108,35 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
     }
 
     const token = authHeader.slice(7);
+    try {
+        const user = await checkForSessionAndFetchUser(token);
+        res.locals.username = user.username;
+        res.locals.userid = user.userid;
+        next();
+    } catch (err) {
+        res.status(401)
+            .send({
+                code: 401,
+                error: 'Not Authorized',
+                errorMessage: 'No session present'
+            });
+        return;
+    }
+}
+
+async function authenticateByCookie(req: Request, res: Response, next: NextFunction) {
+    console.log(req.cookies);
+    if (!req.cookies || !req.cookies['session']) {
+        res.status(401)
+            .send({
+                code: 401,
+                error: 'Not Authorized',
+                errorMessage: 'No Session Cookie Present'
+            });
+        return;
+    }
+
+    const token = req.cookies['session'];
     try {
         const user = await checkForSessionAndFetchUser(token);
         res.locals.username = user.username;
@@ -196,10 +230,53 @@ app.post('/users/avatar', authenticateUser, upload.single('avatar'), async (req:
     }
 
     console.log('got file contents');
-    console.log(req['file']?.buffer);
+    console.log(req['file'].mimetype)
+    console.log(req['file'].buffer);
 
-    res.status(201)
-        .send('Saved avatar');
+    try {
+        const result = await updateAvatarForUser(userid, req['file'].buffer, req['file'].mimetype);
+        res.status(201)
+            .send({
+                status: 'success'
+            });
+    } catch (err) {
+        console.log('Received Error from database layer:');
+        console.log(err);
+        res.status(501)
+            .send({
+                code: 501,
+                error: 'Database save failure',
+                errMessage: 'Failed to save image'
+            });
+            return;
+    }
+});
+
+app.get('/users/:username/avatar', authenticateByCookie, async (req: Request, res: Response) => {
+
+    try {
+        console.log(`Got a request to fetch an avatar for ${req.params.username}`)
+        const [avatar, mimetype] = await fetchAvatarByUsername(req.params.username);
+        console.log('Database returned');
+        console.log(mimetype);
+        console.log(avatar);
+        const img = Buffer.from(avatar);
+        res.writeHead(200, {
+            'Content-Type': mimetype,
+            'Content-Length': img.length
+        });
+        res.end(img);
+    } catch (err) {
+        console.log('Received error from database layer');
+        console.log(err);
+        res.status(404)
+            .send({
+                code: 404,
+                error: 'Database retrieval failure',
+                errorMessage: `Could not retrieve avatar for user ${req.params.username}`
+            });
+    }
+
 });
 
 app.listen(8080, () => {

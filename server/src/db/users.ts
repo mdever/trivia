@@ -155,3 +155,40 @@ export function logout(token: string): Promise<boolean> {
         });
     });
 }
+
+export function updateAvatarForUser(userid: number, contents, filetype: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        console.log('About to insert file with filetype ' + filetype);
+        console.log('And contents');
+        console.log(contents);
+        db.run('UPDATE Users SET avatar_filetype = ?, avatar = ?', filetype, contents, (err) => {
+            if (err) {
+                console.log('Error in database layer. Could not insert image')
+                reject(err);
+                return;
+            }
+
+            resolve(true);
+        })
+    });
+}
+
+export function fetchAvatarByUsername(username: string): Promise<[any, string]> {
+    return new Promise((resolve, reject) => {
+        console.log(`Attempting to retrieve avatar for ${username}`);
+        db.get('SELECT avatar, avatar_filetype FROM Users WHERE username = ?', username, (err, row) => {
+            if (err) {
+                console.log('SQLite err:');
+                console.log(err);
+                reject(err);
+                return;
+            }
+            if (!row) {
+                console.log(`No data fetched for ${username}`);
+                reject('No data retrieved');
+                return;
+            }
+            resolve([row.avatar, row.avatar_filetype]);
+        })
+    });
+}

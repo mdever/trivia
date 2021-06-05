@@ -152,6 +152,10 @@ export const isAuthenticated = createSelector(
     selectUserSlice,
     (state: UserSliceState) => state.token
 );
+export const selectUsername = createSelector(
+    selectUserSlice,
+    (state: UserSliceState) => state.identity?.username
+);
 export const selectUserError = createSelector(
     selectUserSlice,
     (state: UserSliceState) => state.error

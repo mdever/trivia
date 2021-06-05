@@ -1,21 +1,23 @@
 import { Grid, Paper, styled } from "@material-ui/core";
 import { useSelector } from "react-redux";
 import { useHistory } from "react-router";
-import { isAuthenticated, selectToken } from "../store/userSlice";
+import { isAuthenticated, selectToken, selectUsername } from "../store/userSlice";
 import { Button, Input } from '@material-ui/core';
-import { ChangeEvent, SyntheticEvent, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
 import axios from "axios";
 
 const StyledPaper = styled(Paper)({
-    borderWidth: '40px',
-    minHeight: '275px',
+    borderRadius: '40px',
+    minHeight: '300px',
     marginTop: '-2rem',
 })
 
 export default function ProfilePage() {
     const authenticated = useSelector(isAuthenticated);
+    const username = useSelector(selectUsername);
     const history = useHistory();
     const [file, setFile] = useState<File|null>();
+    const [reloadCount, triggerReload] = useState(0);
     const token = useSelector(selectToken);
 
     if (!authenticated) {
@@ -39,7 +41,9 @@ export default function ProfilePage() {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
-        }).then(res => console.log(res))
+        }).then(res => {
+            triggerReload(reloadCount + 1);
+        })
           .catch(err => console.log(err));
     }
 
@@ -48,9 +52,20 @@ export default function ProfilePage() {
             <Grid item xs={4}>
                 <StyledPaper elevation={3}>
                     <Grid container justify="center">
-                        <Grid item xs={6}>
-                            <Input type="file" onChange={handleFileSelect}/>
-                            <Button onClick={uploadFile} color="primary">Upload</Button>
+                        <Grid item xs={8} style={{minHeight: '275px', textAlign: 'center'}}>
+                            {
+                                username &&
+                                <h4>{username}'s Profile</h4>
+                            }
+                            {
+                                username &&
+                                <div>
+                                    <h5>Avatar</h5>
+                                    <img src={`/users/${username}/avatar?v=${reloadCount}`} style={{height: '80px'}}></img>
+                                </div>
+                            }
+                            <Input value="" type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>
+                            <Button onClick={uploadFile} style={{marginBottom: '1rem'}} variant="contained" color="primary">Upload</Button>
                         </Grid>
                     </Grid>
                 </StyledPaper>
