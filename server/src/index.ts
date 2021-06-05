@@ -6,6 +6,7 @@ import { createNewGame, getGamesByUserId } from './db/games';
 import { authenticate, checkForSessionAndFetchUser, createNewUser, logout } from './db/users';
 import { CreateGameRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
 import multer from 'multer';
+import process from 'process';
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -15,6 +16,10 @@ const upload = multer({
 });
 
 const app = express();
+if (process.env.NODE_ENV) {
+    app.use(express.static('public'));
+}
+
 app.use(express.json());
 
 app.get('/', async (req: Request, res: Response) => {
