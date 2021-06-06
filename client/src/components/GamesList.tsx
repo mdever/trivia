@@ -1,4 +1,4 @@
-import { Button, Input, InputLabel } from "@material-ui/core";
+import { Button, Input, InputLabel, Paper, Box, Grid, List, ListItem, ListItemText } from "@material-ui/core";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createNewGame, fetchGames, selectAllGames } from "../store/gamesSlice";
@@ -21,18 +21,39 @@ export default function GamesList() {
     }
 
     return (
-        <div>
-            <h3>Create New Game</h3>
-            <InputLabel htmlFor="name"></InputLabel>
-            <Input name="name" type="text" onChange={(e) => setNewGameName(e.target.value)}/>
-            <Button onClick={createGame} variant="contained" color="primary">Create</Button>
-            {
-                games.map((game, i) => 
-                    <div key={i}>
-                        {game.name}
-                    </div>)
-            }
-            <Button onClick={refreshList} variant="contained" color="secondary">Refresh</Button>
-        </div>
+        <Grid container spacing={2}>
+            <Grid container item xs={12}>
+                <Grid item xs={12} md={6}>
+                    <h3 style={{textAlign: 'center', margin: 0}}>Create New Game</h3>
+                </Grid>
+                <Grid item style={{textAlign: 'center'}} xs={12} md={6}>
+                    <Button style={{margin: 0, padding: 0, height: '40px', width: '100px'}} onClick={refreshList} variant="outlined" color="primary">Refresh</Button>
+                </Grid>
+            </Grid>
+            <Grid item xs={12}>
+                <Paper style={{minHeight: '250px', borderRadius: '40px'}} elevation={3}>
+                    <List>
+                    {
+                    games.map((game, i) => 
+                        <ListItem key={i}>
+                            <ListItemText primary={game.name} />
+                        </ListItem>)
+                }
+                    </List>
+
+                </Paper>
+            </Grid>
+            <Grid container item xs={12}>
+                <Grid item xs={6}>
+                    <InputLabel htmlFor="name">Name</InputLabel>
+                    <Input name="name" type="text" onChange={(e) => setNewGameName(e.target.value)}/>
+                </Grid>
+                <Grid container alignItems="center" direction="row-reverse" item xs={6}>
+                    <Grid item xs={6}>
+                        <Button style={{margin: 'auto'}} onClick={createGame} variant="contained" color="primary">Create</Button>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
     )
 }
