@@ -17,7 +17,6 @@ export default function ProfilePage() {
     const username = useSelector(selectUsername);
     const history = useHistory();
     const [file, setFile] = useState<File|null>();
-    const [reloadCount, triggerReload] = useState(0);
     const [useDefaultAvatar, setUseDefaultAvatar] = useState<boolean>(false);
     const token = useSelector(selectToken);
 
@@ -43,7 +42,7 @@ export default function ProfilePage() {
                 'Authorization': `Bearer ${token}`
             }
         }).then(res => {
-            triggerReload(reloadCount + 1);
+            setUseDefaultAvatar(false);
         })
           .catch(err => console.log(err));
     }
@@ -66,7 +65,7 @@ export default function ProfilePage() {
                                 username &&
                                 <div>
                                     <h5>Avatar</h5>
-                                    <img onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar?v=${reloadCount}`} style={{height: '80px'}}></img>
+                                    <img onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar`} style={{height: '80px'}}></img>
                                 </div>
                             }
                             <Input value="" type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>
