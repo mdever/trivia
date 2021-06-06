@@ -27,10 +27,6 @@ if (process.env.NODE_ENV) {
 app.use(cookieParser());
 app.use(express.json());
 
-app.get('/', async (req: Request, res: Response) => {
-    res.send('Hello World');
-});
-
 app.post('/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<NewUserResponse>) => {
     const userRequest: NewUserRequest = req.body;
     try {
