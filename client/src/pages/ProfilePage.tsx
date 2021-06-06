@@ -68,7 +68,7 @@ export default function ProfilePage() {
                                     <img onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar`} style={{height: '80px'}}></img>
                                 </div>
                             }
-                            <Input value="" type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>
+                            <Input type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>
                             <Button onClick={uploadFile} style={{marginBottom: '1rem'}} variant="contained" color="primary">Upload</Button>
                         </Grid>
                     </Grid>
