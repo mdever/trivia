@@ -4,18 +4,39 @@ import { AppState } from ".";
 
 export interface GameEntity {
     id: number,
-    name: string,
-    ownerId: number
+    name: string
 }
 
 const gamesEntityAdapter = createEntityAdapter<GameEntity>()
 
+export const createNewGame = createAsyncThunk<GameEntity, string>(
+    'games/createNewGame',
+    async (name: string, thunkAPI) => {
+        const token = (thunkAPI.getState() as AppState).user.token;
+        try {
+            const res = await axios.post('/games', {
+                name
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const game = res.data as GameEntity;
+            return game;
+        } catch (err) {
+            console.log('Unable to create game');
+            console.log(err);
+            throw err;
+        }
+    });
+
 export const fetchGames = createAsyncThunk<GameEntity[]>(
     'games/fetchGames',
     async (_: string | void, thunkAPI) => {
+        const token = (thunkAPI.getState() as AppState).user.token;
         const res = await axios.get('http://localhost:3000/games', {
             headers: {
-                'Authorization': 'Bearer d8cb9f608df83d44286651f23c36b18e22480f1cc8f83e154cf66ed56aea3aa5d122cf25730e905eee2688ccc8ffe9c0cc737ec9377de760eb99eb4a6537112718e0f692114a13eb63f6c4843dbfb0ac4cff644969a77e6833881df34e26d25712c264abc6c8232d31a38b125bb19f50367637a124fc7abf201900845326caed'
+                'Authorization': `Bearer: ${token}`
             }
         })
         return res.data.games;
@@ -49,6 +70,19 @@ const gamesSlice = createSlice({
             state.error = false;
             gamesEntityAdapter.addMany(state, action.payload);
         });
+        builder.addCase(createNewGame.pending, (state, action) => {
+            state.loading = true;
+            state.error = false
+        });
+        builder.addCase(createNewGame.rejected, (state, action) => {
+            state.loading = false;
+            state.error = true;
+        });
+        builder.addCase(createNewGame.fulfilled, (state, action: PayloadAction<GameEntity>) => {
+            state.loading = false;
+            state.error = false;
+            gamesEntityAdapter.addOne(state, action.payload);
+        })
     }
 });
 
