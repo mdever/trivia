@@ -7,8 +7,13 @@ import { Button } from "@material-ui/core";
 
 const StyledHeader = styled.header`
     max-height: 200px;
-    text-align: center;
-    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    background: white;
+
+    h1 {
+        margin-left: 2rem;
+        display: inline-block;
+    }
 
     ul {
         list-style: none;
@@ -16,6 +21,14 @@ const StyledHeader = styled.header`
         li {
             display: inline-block;
             margin-right: 1em;
+        }
+    }
+
+    nav {
+        float: right;
+
+        * {
+            display: inline-block;
         }
     }
 `;
@@ -28,15 +41,16 @@ export default function Header(props: { doLogout: LogoutFunction }) {
     return (
         <StyledHeader>
             <h1>Trivia</h1>
-            <ul>
-                <li>
-                    First
-                </li>
-                <li>
-                    Second
-                </li>
-            </ul>
-            {
+            <nav>
+                <ul>
+                    <li>
+                        First
+                    </li>
+                    <li>
+                        Second
+                    </li>
+                </ul>
+                {
                 authenticated &&
                 <div>
                     <Link to="/profile">Profile</Link>
@@ -48,6 +62,7 @@ export default function Header(props: { doLogout: LogoutFunction }) {
                     <Button color="primary" onClick={props.doLogout}>Logout</Button>
                 </div>
             }
+            </nav>
         </StyledHeader>
     )
 }

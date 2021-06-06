@@ -11,7 +11,7 @@ import { isAuthenticated, logoutAction, setUser } from './store/userSlice';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import UnauthenticatedHomePage from './pages/UnauthenticatedHomePage';
-import { Container } from '@material-ui/core';
+import { Container, Box } from '@material-ui/core';
 import RegisterPage from './pages/RegisterPage';
 import { useEffect } from 'react';
 import { useAppDispatch } from './store';
@@ -51,22 +51,24 @@ function App() {
     <div className="App">
       <Router>
         <Header doLogout={logout}/>
-        <Container>
-          <Switch>
-            <Route exact={true} path="/">
-              { homePage }
-            </Route>
-            <Route path="/register">
-              <RegisterPage />
-            </Route>
-            <Route path="/games">
+        <Box mt={8}>
+          <Container>
+            <Switch>
+              <Route exact={true} path="/">
+                { homePage }
+              </Route>
+              <Route path="/register">
+                <RegisterPage />
+              </Route>
+              <Route path="/games">
 
-            </Route>
-            <Route path="/profile">
-              <ProfilePage />
-            </Route>
-          </Switch>
-        </Container>
+              </Route>
+              <Route path="/profile">
+                <ProfilePage />
+              </Route>
+            </Switch>
+          </Container>
+        </Box>
         <Footer />
       </Router>
     </div>
