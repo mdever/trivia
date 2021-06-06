@@ -19,9 +19,9 @@ const upload = multer({
 
 const app = express();
 if (process.env.NODE_ENV) {
-    app.use(express.static('src/public'));
-} else {
     app.use(express.static('public'));
+} else {
+    app.use(express.static('src/public'));
 }
 
 app.use(cookieParser());
