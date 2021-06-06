@@ -55,10 +55,8 @@ export async function getGamesByUserId(userid: number): Promise<any[]> {
                     reject('Could not retrieve games');
                     return;
                 }
-                setTimeout(() => {
-                    resolve(rows);
-                }, 3000)
-
+                resolve(rows);
+                return;
             })
         } catch (err) {
             console.log('Error retrieving games');

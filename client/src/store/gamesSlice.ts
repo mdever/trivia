@@ -18,7 +18,7 @@ export const createNewGame = createAsyncThunk<GameEntity, string>(
                 name
             }, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer: ${token}`
                 }
             });
             const game = res.data as GameEntity;

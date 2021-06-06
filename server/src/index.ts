@@ -95,7 +95,7 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
     }
 
     const authHeader = req.header('Authorization');
-    if (authHeader.slice(0, 7) !== 'Bearer ') {
+    if (authHeader.slice(0, 8) !== 'Bearer: ') {
         res.status(401)
         .send({
             code: 401,
@@ -105,7 +105,7 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
         return;
     }
 
-    const token = authHeader.slice(7);
+    const token = authHeader.slice(8);
     try {
         const user = await checkForSessionAndFetchUser(token);
         res.locals.username = user.username;
