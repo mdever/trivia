@@ -27,3 +27,13 @@ export type NewUserResponse = NewUserResponseSuccess | NewUserResponseFailure;
 export interface CreateGameRequest {
     name: string
 }
+
+export interface CreateQuestionRequest {
+    index?: number,
+    question: string,
+    hint?: string,
+    answers?: {
+        answer: string,
+        correct: boolean
+    }[]
+}

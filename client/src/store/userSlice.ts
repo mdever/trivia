@@ -71,7 +71,7 @@ export const logoutAction = createAsyncThunk(
         try {
             const response = await axios.delete('/sessions', {
                 headers: {
-                    'Authorization': `Bearer: ${state.user.token}`
+                    'Authorization': `Bearer ${state.user.token}`
                 }
             });
         } catch (err) {

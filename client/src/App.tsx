@@ -16,6 +16,7 @@ import RegisterPage from './pages/RegisterPage';
 import { useEffect } from 'react';
 import { useAppDispatch } from './store';
 import ProfilePage from './pages/ProfilePage';
+import GamePage from './pages/GamePage';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -61,7 +62,7 @@ function App() {
                 <RegisterPage />
               </Route>
               <Route path="/games">
-
+                <GamePage />
               </Route>
               <Route path="/profile">
                 <ProfilePage />

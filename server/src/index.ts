@@ -1,10 +1,8 @@
-import express, { NextFunction, RequestHandler, response } from 'express';
+import express, { NextFunction } from 'express';
 import { Request, Response } from 'express';
-import { emitWarning } from 'process';
-import { tokenToString } from 'typescript';
-import { createNewGame, getGamesByUserId } from './db/games';
+import { createNewGame, getGamesByUserId, getQuestionsForGame, insertNewQuestion, validateOwnershipOfGame } from './db/games';
 import { authenticate, checkForSessionAndFetchUser, createNewUser, fetchAvatarByUsername, logout, updateAvatarForUser } from './db/users';
-import { CreateGameRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
+import { CreateGameRequest, CreateQuestionRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import process from 'process';
@@ -95,7 +93,7 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
     }
 
     const authHeader = req.header('Authorization');
-    if (authHeader.slice(0, 8) !== 'Bearer: ') {
+    if (authHeader.slice(0, 7) !== 'Bearer ') {
         res.status(401)
         .send({
             code: 401,
@@ -105,7 +103,7 @@ async function authenticateUser(req: Request, res: Response, next: NextFunction)
         return;
     }
 
-    const token = authHeader.slice(8);
+    const token = authHeader.slice(7);
     try {
         const user = await checkForSessionAndFetchUser(token);
         res.locals.username = user.username;
@@ -214,8 +212,92 @@ app.get('/games', authenticateUser, async (req: Request, res: Response) => {
                 error: 'Database Retrieval Failure',
                 errorMessage: `Could not get games by user id ${userid}`
             });
+    }    
+});
+
+app.post('/games/:gameid/questions', authenticateUser, async (req: Request<{gameid: string}, {}, CreateQuestionRequest>, res: Response) => {
+    const { username, userid } = res.locals;
+    if (!parseInt(req.params.gameid)) {
+        res.status(400)
+            .send({
+                code: 400,
+                error: 'Client Error',
+                errorMessage: 'Client Error: Second Path Param should be an integer'
+            })
+        return;
     }
-    
+
+    const gameid = parseInt(req.params.gameid);
+    try {
+        const authorized = await validateOwnershipOfGame(gameid, userid);
+        if (!authorized) {
+            res.status(401).send();
+            return;
+        }
+
+        const questions = await getQuestionsForGame(gameid);
+        const existingIndexes = questions.map(q => q.index);
+        if (req.body.index && existingIndexes.includes(req.body.index)) {
+            res.status(400)
+                .send({
+                    code: 400,
+                    error: 'Invalid Question',
+                    errorMessage: `Question index ${req.body.index} already used`
+                });
+            return;
+        }
+
+        const resultQuestion = await insertNewQuestion(gameid, req.body);
+        res.status(200)
+            .send(resultQuestion);
+        
+    } catch (err) {
+        res.status(500)
+            .send({
+                code: 500,
+                error: 'Database error',
+                errorMessage: 'An error occured posting new question'
+            });
+        return;
+    }
+})
+
+app.get('/games/:gameid/questions', authenticateUser, async (req: Request<{gameid: string}>, res: Response) => {
+    const { username, userid } = res.locals;
+    if (!parseInt(req.params.gameid)) {
+        res.status(400)
+            .send({
+                code: 400,
+                error: 'Client Error',
+                errorMessage: 'Client Error: Second Path Param should be an integer'
+            });
+        return;
+    }
+    const gameid = parseInt(req.params.gameid);
+
+    try {
+        const authorized = await validateOwnershipOfGame(gameid, userid);
+        if (!authorized) {
+            res.status(401)
+                .send();
+            return;
+        }
+        const questions = await getQuestionsForGame(gameid);
+        res.status(200)
+            .send(questions);
+        return;
+    } catch (err) {
+        console.log('Error caught from db layer getQuestionsForGame');
+        console.log(err);
+        res.status(500)
+            .send({
+                code: 500,
+                error: 'Database Error',
+                errorMessage: `Could not retrieve questions for game ${gameid}`
+            });
+    }
+
+
 });
 
 app.post('/users/avatar', authenticateUser, upload.single('avatar'), async (req: Request, res: Response) => {
@@ -274,7 +356,6 @@ app.get('/users/:username/avatar', authenticateByCookie, async (req: Request, re
                 errorMessage: `Could not retrieve avatar for user ${req.params.username}`
             });
     }
-
 });
 
 app.listen(8080, () => {
