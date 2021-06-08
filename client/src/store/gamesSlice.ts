@@ -7,7 +7,25 @@ export interface GameEntity {
     name: string
 }
 
-const gamesEntityAdapter = createEntityAdapter<GameEntity>()
+export interface QuestionEntity {
+    id: number,
+    gameId: number,
+    question: string,
+    hint?: string,
+    index: number
+}
+
+export interface AnswerEntity {
+    id: number,
+    questionId: number,
+    answer: string,
+    correct: boolean,
+    index: number
+}
+
+const gamesEntityAdapter = createEntityAdapter<GameEntity>();
+const questionsEntityAdapter = createEntityAdapter<QuestionEntity>();
+const answersEntityAdapter = createEntityAdapter<AnswerEntity>();
 
 export const createNewGame = createAsyncThunk<GameEntity, string>(
     'games/createNewGame',
@@ -18,7 +36,7 @@ export const createNewGame = createAsyncThunk<GameEntity, string>(
                 name
             }, {
                 headers: {
-                    'Authorization': `Bearer: ${token}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
             const game = res.data as GameEntity;
@@ -36,16 +54,36 @@ export const fetchGames = createAsyncThunk<GameEntity[]>(
         const token = (thunkAPI.getState() as AppState).user.token;
         const res = await axios.get('http://localhost:3000/games', {
             headers: {
-                'Authorization': `Bearer: ${token}`
+                'Authorization': `Bearer ${token}`
             }
         })
         return res.data.games;
     });
 
+export const fetchGameDetails = createAsyncThunk(
+    'games/fetchGameDetails',
+    async (gameid: number, thunkAPI) => {
+        try {
+            const token = (thunkAPI.getState() as AppState).user.token;
+            const res = await axios.get(`/games/${gameid}/questions`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return res.data;
+        } catch (err) {
+            console.log(`An error occurred fetching game details for Game ID: ${gameid}`);
+            console.log(err);
+            throw err;
+        }
+    });
+
 const gamesSlice = createSlice({
     name: 'games',
     initialState: {
-        ...gamesEntityAdapter.getInitialState(),
+        games: gamesEntityAdapter.getInitialState(),
+        questions: questionsEntityAdapter.getInitialState(),
+        answers: answersEntityAdapter.getInitialState(),
         loading: false,
         error: false
     },
@@ -56,19 +94,19 @@ const gamesSlice = createSlice({
         builder.addCase(fetchGames.pending, (state, action) => {
             state.loading = true;
             state.error = false;
-            gamesEntityAdapter.removeAll(state);
+            gamesEntityAdapter.removeAll(state.games);
         });
         builder.addCase(fetchGames.rejected, (state, err: SerializedError | any) => {
             console.log('Error fetching games');
             console.log(err);
             state.loading = false;
             state.error = true;
-            gamesEntityAdapter.removeAll(state);
+            gamesEntityAdapter.removeAll(state.games);
         });
         builder.addCase(fetchGames.fulfilled, (state, action: PayloadAction<GameEntity[]>) => {
             state.loading = false;
             state.error = false;
-            gamesEntityAdapter.addMany(state, action.payload);
+            gamesEntityAdapter.addMany(state.games, action.payload);
         });
         builder.addCase(createNewGame.pending, (state, action) => {
             state.loading = true;
@@ -81,8 +119,26 @@ const gamesSlice = createSlice({
         builder.addCase(createNewGame.fulfilled, (state, action: PayloadAction<GameEntity>) => {
             state.loading = false;
             state.error = false;
-            gamesEntityAdapter.addOne(state, action.payload);
-        })
+            gamesEntityAdapter.addOne(state.games, action.payload);
+        });
+        builder.addCase(fetchGameDetails.pending, (state, action) => {
+            state.loading = true;
+            state.error = false;
+        });
+        builder.addCase(fetchGameDetails.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = false;
+            const response = action.payload;
+            for (const q of response) {
+                const { createdAt, updatedAt, answers, ...question} = q;
+                questionsEntityAdapter.upsertOne(state.questions, question);
+
+                for (const a of answers) {
+                    const { createdAt, updatedAt, ...answer } = a;
+                    answersEntityAdapter.upsertOne(state.answers, answer);
+                }
+            }
+        });
     }
 });
 
@@ -105,4 +161,20 @@ export const {
     selectIds: selectGameIds,
     selectEntities: selectGameEntities,
     selectTotal: selectGameTotal
-} = gamesEntityAdapter.getSelectors(selectGamesSlice);
+} = gamesEntityAdapter.getSelectors((state: AppState) => selectGamesSlice(state).games);
+
+export const {
+    selectAll: selectAllQuestions,
+    selectById: selectQuestionById,
+    selectIds: selectQuestionIds,
+    selectEntities: selectQuestionEntities,
+    selectTotal: selectQuestionTotal
+} = questionsEntityAdapter.getSelectors((state: AppState) => selectGamesSlice(state).questions);
+
+export const {
+    selectAll: selectAllAnswers,
+    selectById: selectAnswerById,
+    selectIds: selectAnswerIds,
+    selectEntities: selectAnswerEntities,
+    selectTotal: selectAnswerTotal
+} = answersEntityAdapter.getSelectors((state: AppState) => selectGamesSlice(state).answers);

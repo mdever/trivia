@@ -37,3 +37,31 @@ export interface CreateQuestionRequest {
         correct: boolean
     }[]
 }
+
+export interface AnswerDO {
+    id: number,
+    questionId: number,
+    answer: string,
+    correct: boolean,
+    index: number
+}
+
+export interface QuestionDO {
+    id: number,
+    gameId: number,
+    index: number,
+    question: string,
+    hint?: string,
+    createdAt: Date,
+    updatedAt: Date,
+    answers: AnswerDO[]
+}
+
+export interface GameDO {
+    id: number,
+    ownerId: number,
+    name: string,
+    createdAt: Date,
+    updatedAt: Date,
+    questions: QuestionDO[]
+}

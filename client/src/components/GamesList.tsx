@@ -1,6 +1,7 @@
 import { Button, Input, InputLabel, Paper, Box, Grid, List, ListItem, ListItemText } from "@material-ui/core";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from 'react-router-dom';
 import { createNewGame, fetchGames, selectAllGames } from "../store/gamesSlice";
 
 export default function GamesList() {
@@ -34,11 +35,13 @@ export default function GamesList() {
                 <Paper style={{minHeight: '250px', borderRadius: '40px'}} elevation={3}>
                     <List>
                     {
-                    games.map((game, i) => 
-                        <ListItem key={i}>
-                            <ListItemText primary={game.name} />
-                        </ListItem>)
-                }
+                    games.map((game, i) =>
+                        <Link to={`/games/${game.id}`} key={i}>
+                            <ListItem>
+                                <ListItemText primary={game.name} />
+                            </ListItem>
+                        </Link>)
+                    }
                     </List>
 
                 </Paper>

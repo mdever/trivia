@@ -61,7 +61,7 @@ function App() {
               <Route path="/register">
                 <RegisterPage />
               </Route>
-              <Route path="/games">
+              <Route path="/games/:id">
                 <GamePage />
               </Route>
               <Route path="/profile">

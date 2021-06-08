@@ -1,5 +1,5 @@
 import db from '.';
-import { CreateQuestionRequest } from '../types';
+import { CreateQuestionRequest, GameDO } from '../types';
 
 const createNewGameProcedure = db.prepare('INSERT INTO games (name, ownerId, createdAt, updatedAt) VALUES (?, ?, ?, ?)', (err) => {
     if (err) {
@@ -68,6 +68,56 @@ export async function getGamesByUserId(userid: number): Promise<any[]> {
     })
 }
 
+export async function getGetGameDetails(gameid: number): Promise<GameDO> {
+    return new Promise(async (resolve, reject) => {
+        db.get('SELECT * FROM games WHERE id = ?', gameid, async (err, row) => {
+            if (err) {
+                console.log(`Error retrieving game for Game ID ${gameid}`);
+                console.log(err);
+                reject(err);
+                return;
+            }
+            if (!row) {
+                console.log(`No Game found for Game ID ${gameid}`);
+                reject('Game Not Found');
+                return;
+            }
+
+            const {
+                id: gid,
+                ownerId,
+                name: gameName,
+                createdAt: gCreatedAt,
+                updatedAt: gUpdatedAt
+            } = row;
+
+            try {
+                let questions = await getQuestionsForGame(gameid);
+                if (!questions) {
+                    questions = [];
+                }
+
+                resolve({
+                    id: gid,
+                    ownerId,
+                    name: gameName,
+                    createdAt: gCreatedAt,
+                    updatedAt: gUpdatedAt,
+                    questions
+                });
+
+                return;
+            } catch (err) {
+                console.log('Error fetching questions for game ' + gameid);
+                console.log(err);
+                reject(err);
+                return;
+            }
+
+        })
+    });
+}
+
 export async function validateOwnershipOfGame(gameid: number, userid: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
         db.get('SELECT ownerId FROM games WHERE id = ?', gameid, (err, row) => {
@@ -89,7 +139,7 @@ export async function validateOwnershipOfGame(gameid: number, userid: number): P
     });
 }
 
-export async function getQuestionsForGame(gameid: number): Promise<{ id: number, question: string, hint?: string, index: number, gameid: number, answers: { id: number, answer: string, index: number, correct: boolean }[] }[]> {
+export async function getQuestionsForGame(gameid: number): Promise<{ id: number, question: string, hint?: string, index: number, gameId: number, createdAt: Date, updatedAt: Date, answers: { id: number, questionId: number, answer: string, index: number, correct: boolean, createdAt: Date, updatedAt: Date }[] }[]> {
     return new Promise((resolve, reject) => {
         db.all('SELECT * FROM Questions WHERE gameId = ? ORDER BY `index` asc', gameid, (err, questions) => {
             if (err) {
@@ -130,7 +180,9 @@ export async function getQuestionsForGame(gameid: number): Promise<{ id: number,
                         questionId: a.questionId,
                         answer: a.answer,
                         correct: a.correct === 1 ? true : false,
-                        index: a.index
+                        index: a.index,
+                        createdAt: a.createdAt,
+                        updatedAt: a.updatedAt
                     }));
                     results.push({
                         id: q.id,
@@ -138,7 +190,9 @@ export async function getQuestionsForGame(gameid: number): Promise<{ id: number,
                         question: q.question,
                         hint: q.hint,
                         index: q.index,
-                        answers: answersForQuestion
+                        answers: answersForQuestion,
+                        createdAt: q.createdAt,
+                        updatedAt: q.updatedAt
                     });
                 }
 
