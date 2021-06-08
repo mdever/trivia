@@ -1,11 +1,14 @@
 import { useEffect } from "react"
+import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom"
 import { useAppDispatch } from "../store";
-import { fetchGameDetails } from "../store/gamesSlice";
+import { fetchGameDetails, selectGameDetails } from "../store/gamesSlice";
+import EditGame from '../components/EditGame';
 
 export default function GamePage() {
     const { id } = useParams<{id: string}>();
     const dispatch = useAppDispatch();
+    const gameDetails = useSelector(selectGameDetails(parseInt(id)));
 
     useEffect(() => {
         let gameid = parseInt(id);
@@ -13,6 +16,16 @@ export default function GamePage() {
     }, [id])
 
     return (
-        <div>Games page</div>
+        <div>
+            <div>Games page</div>
+            {
+                gameDetails &&
+                <EditGame game={gameDetails} />
+            }
+            {
+                !gameDetails &&
+                <h3>Error: No Game found</h3>
+            }
+        </div>
     )
 }

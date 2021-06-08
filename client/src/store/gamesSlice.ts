@@ -23,6 +23,14 @@ export interface AnswerEntity {
     index: number
 }
 
+export interface QuestionDetails extends QuestionEntity {
+    answers: AnswerEntity[];
+}
+
+export interface GameDetails extends GameEntity {
+    questions: QuestionDetails[]
+}
+
 const gamesEntityAdapter = createEntityAdapter<GameEntity>();
 const questionsEntityAdapter = createEntityAdapter<QuestionEntity>();
 const answersEntityAdapter = createEntityAdapter<AnswerEntity>();
@@ -125,6 +133,10 @@ const gamesSlice = createSlice({
             state.loading = true;
             state.error = false;
         });
+        builder.addCase(fetchGameDetails.rejected, (state, action) => {
+            state.loading = false;
+            state.error = true;
+        });
         builder.addCase(fetchGameDetails.fulfilled, (state, action) => {
             state.loading = false;
             state.error = false;
@@ -178,3 +190,22 @@ export const {
     selectEntities: selectAnswerEntities,
     selectTotal: selectAnswerTotal
 } = answersEntityAdapter.getSelectors((state: AppState) => selectGamesSlice(state).answers);
+
+export const selectQuestionsForGame = (gameid: number) => createSelector(
+    (state: AppState) => selectAllQuestions(state),
+    (state: AppState) => selectAllAnswers(state),
+    (questions, answers) => questions.filter(q => q.gameId === gameid).map(q => ({...q, answers: answers.filter(a => a.questionId === q.id)}))
+)
+
+export const selectGameDetails = (gameid: number) => createSelector(
+    (state: AppState) => selectGameById(state, gameid),
+    (state: AppState) => selectQuestionsForGame(gameid)(state),
+    (game, questions) => {
+        if (!game)
+            return null;
+        return {
+            ...game,
+            questions
+        };
+    }
+)
