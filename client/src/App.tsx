@@ -7,13 +7,12 @@ import {
 import './App.css';
 import { useSelector } from 'react-redux';
 import HomePage from './pages/HomePage';
-import { isAuthenticated, logoutAction, setUser } from './store/userSlice';
+import { isAuthenticated, logoutAction } from './store/userSlice';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import UnauthenticatedHomePage from './pages/UnauthenticatedHomePage';
 import { Container, Box } from '@material-ui/core';
 import RegisterPage from './pages/RegisterPage';
-import { useEffect } from 'react';
 import { useAppDispatch } from './store';
 import ProfilePage from './pages/ProfilePage';
 import GamePage from './pages/GamePage';

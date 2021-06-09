@@ -1,6 +1,5 @@
 import { useSelector } from "react-redux"
 import { isAuthenticated } from "../store/userSlice"
-import CSS from 'csstype';
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Button } from "@material-ui/core";

@@ -38,12 +38,20 @@ export interface CreateQuestionRequest {
     }[]
 }
 
+export interface CreateAnswerRequest {
+    index?: number,
+    answer: string,
+    correct: boolean
+}
+
 export interface AnswerDO {
     id: number,
     questionId: number,
     answer: string,
     correct: boolean,
-    index: number
+    index: number,
+    createdAt: Date,
+    updatedAt: Date
 }
 
 export interface QuestionDO {

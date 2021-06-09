@@ -21,8 +21,8 @@ const StyledInput = styled(Input)({
 export default function RegisterPage() {
     const dispatch = useAppDispatch();
     const history = useHistory();
-    const userError = useSelector(selectUserError);
-    const userLoading = useSelector(selectUserLoading);
+    // const userError = useSelector(selectUserError);
+    // const userLoading = useSelector(selectUserLoading);
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');

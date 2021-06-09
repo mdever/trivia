@@ -17,7 +17,10 @@ export default function GamePage() {
 
     return (
         <div>
-            <div>Games page</div>
+            {
+                gameDetails && 
+                <h1>{gameDetails.name}</h1>
+            }
             {
                 gameDetails &&
                 <EditGame game={gameDetails} />

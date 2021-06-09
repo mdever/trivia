@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useHistory } from "react-router";
 import { isAuthenticated, selectToken, selectUsername } from "../store/userSlice";
 import { Button, Input } from '@material-ui/core';
-import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import axios from "axios";
 
 const StyledPaper = styled(Paper)({
@@ -65,7 +65,7 @@ export default function ProfilePage() {
                                 username &&
                                 <div>
                                     <h5>Avatar</h5>
-                                    <img onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar`} style={{height: '80px'}}></img>
+                                    <img alt="User Avatar" onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar`} style={{height: '80px'}}></img>
                                 </div>
                             }
                             <Input type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>

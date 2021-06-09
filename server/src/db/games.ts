@@ -1,5 +1,5 @@
 import db from '.';
-import { CreateQuestionRequest, GameDO } from '../types';
+import { AnswerDO, CreateAnswerRequest, CreateQuestionRequest, GameDO } from '../types';
 
 const createNewGameProcedure = db.prepare('INSERT INTO games (name, ownerId, createdAt, updatedAt) VALUES (?, ?, ?, ?)', (err) => {
     if (err) {
@@ -311,4 +311,39 @@ export async function insertNewQuestion(gameid: number, question: CreateQuestion
             }
         });
     })
+}
+
+export async function fetchAnswersForQuestion(questionid: number): Promise<AnswerDO[]> {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM answers WHERE questionId = ?', questionid, (err, rows) => {
+            if (err) {
+                console.log(`Could not fetch answers for question ${questionid}`);
+                console.log(err);
+                reject(err);
+                return;
+            }
+
+            if (!rows) {
+                resolve([]);
+                return;
+            }
+
+            resolve(rows);
+            return;
+        })
+    });
+}
+
+export async function insertNewAnswer(questionid: number, answer: CreateAnswerRequest): Promise<{id: number, questionId: number, index: number, answer: string, correct: boolean, createdAt: Date, updatedAt: Date}> {
+    return new Promise(async (resolve, reject) => {
+        
+        try {
+            const existingAnswers = await fetchAnswersForQuestion(questionid);
+        } catch (err) {
+            console.log(`Error inserting answer ${answer}`);
+            console.log(err);
+            reject(err);
+            return;
+        }
+    });
 }
