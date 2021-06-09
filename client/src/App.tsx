@@ -29,18 +29,6 @@ function App() {
     homePage = <UnauthenticatedHomePage />
   }
 
-  useEffect(() => {
-    const username = window.localStorage.getItem('username');
-    const token = window.localStorage.getItem('token');
-
-    if (username && token) {
-      dispatch(setUser({username, token}));
-    } else {
-      window.localStorage.removeItem('username');
-      window.localStorage.removeItem('token');
-    }
-  }, []);
-
   function logout() {
     dispatch(logoutAction())
       .then(() => {
