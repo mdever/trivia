@@ -110,6 +110,26 @@ export const patchAnswer = createAsyncThunk(
     }
 )
 
+export const deleteAnswer = createAsyncThunk<number, {gameid: number, answerid: number}>(
+    'answers/deleteAnswer',
+    async (deleteRequest, thunkAPI) => {
+        try {
+            const token = (thunkAPI.getState() as AppState).user.token;
+            const res = await axios.delete(`/games/${deleteRequest.gameid}/answers/${deleteRequest.answerid}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            return res.data.answerid as number;
+        } catch (err) {
+            console.log(`An error occurred deleting answer ${deleteRequest.answerid}`);
+            console.log(err);
+            throw err;
+        }
+    }
+)
+
 const gamesSlice = createSlice({
     name: 'games',
     initialState: {
@@ -179,6 +199,11 @@ const gamesSlice = createSlice({
             state.loading = false;
             state.error = false;
             answersEntityAdapter.upsertOne(state.answers, action.payload);
+        })
+        builder.addCase(deleteAnswer.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = false;
+            answersEntityAdapter.removeOne(state.answers, action.payload);
         })
     }
 });

@@ -1,6 +1,6 @@
 import express, { NextFunction } from 'express';
 import { Request, Response } from 'express';
-import { checkOwnershipOfGame, createNewGame, getGamesByUserId, getQuestionsForGame, insertNewAnswer, insertNewQuestion, updateAnswer, validateOwnershipOfGame } from './db/games';
+import { checkOwnershipOfGame, createNewGame, deleteAnswer, fetchGameForAnswerId, getGamesByUserId, getQuestionsForGame, insertNewAnswer, insertNewQuestion, updateAnswer, validateOwnershipOfGame } from './db/games';
 import { authenticate, checkForSessionAndFetchUser, createNewUser, fetchAvatarByUsername, logout, updateAvatarForUser } from './db/users';
 import { CreateAnswerRequest, CreateGameRequest, CreateQuestionRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
 import cookieParser from 'cookie-parser';
@@ -377,7 +377,82 @@ app.patch('/games/:gameid/answers/:answerid', authenticateUser, async (req: Requ
             .send(result);
         return;
     } catch (err) {
+        console.log(`Error occurred patching answer`);
+        console.log(err);
+        res.status(500)
+            .send({
+                code: 500,
+                error: 'Server Error',
+                errorString: 'Something went wrong patching the answer'
+            });
+    }
+})
 
+app.delete(`/games/:gameid/answers/:answerid`, authenticateUser, async (req: Request<{gameid: string, answerid: string}>, res: Response) => {
+    const { username, userid } = res.locals;
+    const gameid = parseInt(req.params.gameid);
+    const answerid = parseInt(req.params.answerid);
+
+    if (gameid === NaN || answerid === NaN) {
+        console.log('Expected numeric values for gameid and answerid. Could not patch answer');
+        res.status(400)
+            .send({
+                code: 400,
+                error: "Invalid path params",
+                errorMessage: ":gameid and :answerid should be integers"
+            });
+        return;
+    }
+
+    try {
+        const authorized = await checkOwnershipOfGame(userid, gameid);
+        if (!authorized) {
+            res.status(401)
+                .send({
+                    code: 401,
+                    error: "Not Authorized",
+                    errorMessage: `User ${username} is not authorized to access game id ${gameid}`
+                });
+            return;
+        }
+
+        try {
+            const gameId = await fetchGameForAnswerId(answerid);
+            if (gameid !== gameId) {
+                res.status(401)
+                    .send({
+                        code: 401,
+                        error: 'Invalid Reference',
+                        errorMessage: `answer ${answerid} does not belong to game ${gameid}`
+                    });
+                return;
+            }
+
+            const result = deleteAnswer(answerid);
+            res.status(200).send({
+                answerid
+            });
+        } catch (err) {
+            console.log('Something went wrong in DELETE /answers');
+            console.log(err);
+            res.status(500)
+                .send({
+                    code: 500,
+                    error: 'Server Error',
+                    errorMessage: `Could not delete answerid ${answerid}`
+                });
+            return;
+        }
+
+    } catch (err) {
+        console.log(`Error occurred deleting answer`);
+        console.log(err);
+        res.status(500)
+            .send({
+                code: 500,
+                error: 'Server Error',
+                errorString: 'Something went wrong deleting the answer'
+            });
     }
 })
 

@@ -1,6 +1,6 @@
 import { Accordion, AccordionSummary, AccordionDetails, Grid, Input } from '@material-ui/core';
 import React, { useState } from 'react';
-import { AnswerEntity, GameDetails, patchAnswer, QuestionDetails } from '../store/gamesSlice';
+import { AnswerEntity, deleteAnswer, GameDetails, patchAnswer, QuestionDetails } from '../store/gamesSlice';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteSharpIcon from '@material-ui/icons/DeleteSharp';
 import DoneIcon from '@material-ui/icons/Done';
@@ -42,7 +42,7 @@ function QuestionAccordion(props: {gameid: number, question: QuestionDetails, id
                 </Grid>
                 <Grid item xs={1}>
                     <EditIcon color="primary" style={{cursor: 'pointer'}} onClick={() => setEditModes({...editModes, [answer.id]: true})}/>
-                    <DeleteSharpIcon style={{marginLeft: '1rem', cursor: 'pointer'}} color="error" />
+                    <DeleteSharpIcon onClick={() => {dispatch(deleteAnswer({gameid, answerid: answer.id}))}} style={{marginLeft: '1rem', cursor: 'pointer'}} color="error" />
                 </Grid>                           
             </React.Fragment>);
         }

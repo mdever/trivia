@@ -1,3 +1,4 @@
+import e from 'express';
 import db from '.';
 import { AnswerDO, CreateAnswerRequest, CreateQuestionRequest, GameDO } from '../types';
 
@@ -414,6 +415,25 @@ export async function updateAnswer(answerid: number, answer: Partial<CreateAnswe
     });
 }
 
+export async function deleteAnswer(answerid: number): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM answers WHERE id = ?', answerid, function(err) {
+            if (err) {
+                console.log(`Error deleting answer id ${answerid}`);
+                console.log(err);
+                reject(err);
+                return;
+            }
+
+            if (!this.lastID) {
+                resolve(false);
+            } else {
+                resolve(true);
+            }
+        })
+    })
+}
+
 export async function checkOwnershipOfGame(userid, gameid): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
         db.get('SELECT ownerId FROM games where id = ?', gameid, (err, row) => {
@@ -436,6 +456,41 @@ export async function checkOwnershipOfGame(userid, gameid): Promise<boolean> {
                 resolve(true);
                 return;
             }
+        })
+    });
+}
+
+export async function fetchGameForAnswerId(answerid: number): Promise<number> {
+    return new Promise(async (resolve, reject) => {
+        db.get('SELECT questionId FROM answers where id = ?', answerid, (err, row) => {
+            if (err) {
+                console.log(`Error occurred fetching Game ID ${answerid}`);
+                console.log(err);
+                reject(err);
+            }
+
+            if (!row) {
+                console.log(`No game found for gameId ${answerid}`);
+                reject('NOT_FOUND');
+                return;
+            }
+
+            db.get('SELECT gameId FROM questions WHERE id = ?', row.questionId, (err2, row2) => {
+                if (err2) {
+                    console.log(`Error occurred fetching Question ID ${row.questionId}`);
+                    console.log(err2);
+                    reject(err2);
+                }
+
+                if (!row2) {
+                    console.log(`No question found for questionId ${row.questionId}`);
+                    reject('NOT_FOUND');
+                    return;
+                }
+
+                resolve(row2.gameId);
+                return;
+            })
         })
     });
 }
