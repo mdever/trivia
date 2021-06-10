@@ -1,3 +1,4 @@
+import { ChangeHistorySharp } from "@material-ui/icons";
 import { createAsyncThunk, createEntityAdapter, createSelector, createSlice, PayloadAction, SerializedError } from "@reduxjs/toolkit";
 import axios from "axios";
 import { AppState } from ".";
@@ -86,6 +87,29 @@ export const fetchGameDetails = createAsyncThunk(
         }
     });
 
+export const patchAnswer = createAsyncThunk(
+    'answers/patchAnswer',
+    async (changeRequest: {id: number, gameid: number, changes: Partial<{answer: string, correct: boolean}>}, thunkAPI) => {
+        try {
+            const token = (thunkAPI.getState() as AppState).user.token;
+            const res = await axios.patch(`/games/${changeRequest.gameid}/answers/${changeRequest.id}`, {
+                answer: changeRequest.changes.answer,
+                correct: changeRequest.changes.correct
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            return res.data;
+        } catch (err) {
+            console.log(`An error occurred updating answer ${changeRequest.id}`);
+            console.log(err);
+            throw err;
+        }
+    }
+)
+
 const gamesSlice = createSlice({
     name: 'games',
     initialState: {
@@ -151,6 +175,11 @@ const gamesSlice = createSlice({
                 }
             }
         });
+        builder.addCase(patchAnswer.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = false;
+            answersEntityAdapter.upsertOne(state.answers, action.payload);
+        })
     }
 });
 

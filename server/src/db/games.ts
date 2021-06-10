@@ -336,14 +336,106 @@ export async function fetchAnswersForQuestion(questionid: number): Promise<Answe
 
 export async function insertNewAnswer(questionid: number, answer: CreateAnswerRequest): Promise<{id: number, questionId: number, index: number, answer: string, correct: boolean, createdAt: Date, updatedAt: Date}> {
     return new Promise(async (resolve, reject) => {
-        
         try {
             const existingAnswers = await fetchAnswersForQuestion(questionid);
+            let index = answer.index;
+            if (!index) {
+                index = Math.max(...existingAnswers.map(a => a.index)) + 1;
+            }
+            while (existingAnswers.map(a => a.index).includes(index)) {
+                index += 1;
+            }
+            const createdAt = (new Date());
+            db.run('INSERT INTO Answers (answer, questionId, correct, `index`, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)', answer.answer, questionid, answer.correct, index, createdAt, createdAt, function(err) {
+                if (err) {
+                    console.log('Could not insert answer');
+                    console.log(err);
+                    reject(err);
+                    return;
+                }
+
+                resolve({
+                    id: this.lastID,
+                    questionId: questionid,
+                    answer: answer.answer,
+                    index: index,
+                    correct: answer.correct,
+                    createdAt: createdAt,
+                    updatedAt: createdAt
+                });
+                return;
+            });
         } catch (err) {
             console.log(`Error inserting answer ${answer}`);
             console.log(err);
             reject(err);
             return;
         }
+    });
+}
+
+export async function updateAnswer(answerid: number, answer: Partial<CreateAnswerRequest>): Promise<AnswerDO> {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM answers WHERE id = ?', answerid, (err, row) => {
+            if (err) {
+                console.log(`Something went wrong fetch answer id ${answerid}`);
+                console.log(err);
+                reject(err);
+            }
+
+            if (!row) {
+                console.log(`No row returned for answer id ${answerid}`);
+                reject('NOT_FOUND');
+                return;
+            }
+
+            const updatedAt = new Date();
+            let newAnswer = {
+                ...row,
+                ...answer,
+                id: row.id,
+                questionId: row.questionId,
+                correct: answer.correct === true ? 1 : answer.correct === false ? 0 : row.correct ? 1 : 0,
+                updatedAt
+            };
+
+            db.run('UPDATE answers SET answer = ?, correct = ?, `index` = ?, updatedAt = ? WHERE id = ?', newAnswer.answer, newAnswer.correct, newAnswer.index, updatedAt, answerid, function(err) {
+                if (err) {
+                    console.log(`Error updating answer ${answerid}`);
+                    console.log(err)
+                    reject(err);
+                    return;
+                }
+
+                resolve(newAnswer);
+                return;
+            })
+        })
+    });
+}
+
+export async function checkOwnershipOfGame(userid, gameid): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+        db.get('SELECT ownerId FROM games where id = ?', gameid, (err, row) => {
+            if (err) {
+                console.log(`Error occurred fetching Game ID ${gameid}`);
+                console.log(err);
+                reject(err);
+            }
+
+            if (!row) {
+                console.log(`No game found for gameId ${gameid}`);
+                reject('NOT_FOUND');
+                return;
+            }
+
+            if (row.ownerId !== userid) {
+                resolve(false);
+                return;
+            } else {
+                resolve(true);
+                return;
+            }
+        })
     });
 }

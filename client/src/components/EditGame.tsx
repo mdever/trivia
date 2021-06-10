@@ -1,24 +1,27 @@
 import { Accordion, AccordionSummary, AccordionDetails, Grid, Input } from '@material-ui/core';
 import React, { useState } from 'react';
-import { AnswerEntity, GameDetails, QuestionDetails } from '../store/gamesSlice';
+import { AnswerEntity, GameDetails, patchAnswer, QuestionDetails } from '../store/gamesSlice';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteSharpIcon from '@material-ui/icons/DeleteSharp';
 import DoneIcon from '@material-ui/icons/Done';
 import ClearIcon from '@material-ui/icons/Clear';
+import { useAppDispatch } from '../store';
 
-function QuestionAccordion(props: {question: QuestionDetails, idx: number}) {
+function QuestionAccordion(props: {gameid: number, question: QuestionDetails, idx: number}) {
+    const dispatch = useAppDispatch();
     const [editModes, setEditModes] = useState<{ [id: number]: boolean }>({});
-    const [pendingChanges, setPendingChanges] = useState<{ [id: number]: string }>({});
+    const [pendingChanges, setPendingChanges] = useState<{ [id: number]: {answer: string, correct: boolean} }>({});
 
-    const answerRow = (answer: AnswerEntity, editMode: boolean, i: number) => {
+    const answerRow = (gameid: number, answer: AnswerEntity, editMode: boolean, i: number) => {
         if (editMode) {
             return (<React.Fragment key={i}>
                 <Grid item style={{paddingLeft: '3rem'}} xs={11}>
-                    <Input type="text" defaultValue={answer.answer} onChange={(e) => setPendingChanges({...pendingChanges, [answer.id]: e.target.value})}/>
+                    <Input type="text" defaultValue={answer.answer} onChange={(e) => setPendingChanges({...pendingChanges, [answer.id]: { ...pendingChanges[answer.id], answer: e.target.value }})}/>
                 </Grid>
                 <Grid item xs={1}>
                     <DoneIcon color="primary" style={{cursor: 'pointer'}} onClick={() => {
                         console.log(`Updating answer id ${answer.id} with new value ${pendingChanges[answer.id]}`);
+                        dispatch(patchAnswer({id: answer.id, gameid, changes: {...pendingChanges[answer.id]}}));
                         let newState = pendingChanges;
                         delete newState[answer.id];
                         setPendingChanges(newState);
@@ -53,7 +56,7 @@ function QuestionAccordion(props: {question: QuestionDetails, idx: number}) {
                 <Grid container spacing={3}>
                 {
                     props.question.answers.map((a, i) =>
-                        answerRow(a, editModes[a.id], i)
+                        answerRow(props.gameid, a, editModes[a.id], i)
                     )
                 }
                </Grid>
@@ -73,7 +76,7 @@ export default function EditGame(props: {game: GameDetails}) {
                 <AccordionDetails>
                     {
                         game.questions.map((q, i) => 
-                            <QuestionAccordion question={q} idx={i} />
+                            <QuestionAccordion gameid={game.id} question={q} idx={i} />
                         )
                     }
                 </AccordionDetails>

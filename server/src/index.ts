@@ -1,8 +1,8 @@
 import express, { NextFunction } from 'express';
 import { Request, Response } from 'express';
-import { createNewGame, getGamesByUserId, getQuestionsForGame, insertNewQuestion, validateOwnershipOfGame } from './db/games';
+import { checkOwnershipOfGame, createNewGame, getGamesByUserId, getQuestionsForGame, insertNewAnswer, insertNewQuestion, updateAnswer, validateOwnershipOfGame } from './db/games';
 import { authenticate, checkForSessionAndFetchUser, createNewUser, fetchAvatarByUsername, logout, updateAvatarForUser } from './db/users';
-import { CreateGameRequest, CreateQuestionRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
+import { CreateAnswerRequest, CreateGameRequest, CreateQuestionRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import process from 'process';
@@ -299,6 +299,87 @@ app.get('/games/:gameid/questions', authenticateUser, async (req: Request<{gamei
 
 
 });
+
+app.post('/games/:gameid/questions/:questionid/answers', authenticateUser, async (req: Request<{ gameid: string, questionid: string }, {}, CreateAnswerRequest>, res: Response) => {
+    const {userid, username} = res.locals;
+    const gameid = parseInt(req.params.gameid);
+    const questionid = parseInt(req.params.questionid);
+    if (gameid === NaN || questionid === NaN) {
+        console.log('Expected numeric values for gameid and questionid. Could not post answer');
+        res.status(400)
+            .send({
+                code: 400,
+                error: "Invalid path params",
+                errorMessage: ":gameid and :questionid should be integers"
+            });
+        return;
+    }
+
+    try {
+        const authorized = await checkOwnershipOfGame(userid, gameid);
+        if (!authorized) {
+            res.status(401)
+                .send({
+                    code: 401,
+                    error: "Not Authorized",
+                    errorMessage: `User ${username} is not authorized to access game id ${gameid}`
+                });
+            return;
+        }
+
+        const dbAnswer = await insertNewAnswer(questionid, req.body);
+        res.status(201)
+            .send(dbAnswer);
+
+        return;
+    } catch (err) {
+        console.log(`Error at POST /answers`);
+        console.log(err);
+        res.status(500)
+            .send({
+                code: 500,
+                error: 'Server Error',
+                errorMessage: 'Could not create new answer. Please check server logs for more information'
+            });
+        return;
+    }
+});
+
+app.patch('/games/:gameid/answers/:answerid', authenticateUser, async (req: Request<{gameid: string, answerid: string}, {}, Partial<CreateAnswerRequest>>, res: Response) => {
+    const { username, userid } = res.locals;
+    const gameid = parseInt(req.params.gameid);
+    const answerid = parseInt(req.params.answerid);
+    if (gameid === NaN || answerid === NaN) {
+        console.log('Expected numeric values for gameid and answerid. Could not patch answer');
+        res.status(400)
+            .send({
+                code: 400,
+                error: "Invalid path params",
+                errorMessage: ":gameid and :answerid should be integers"
+            });
+        return;
+    }
+
+    try {
+        const authorized = await checkOwnershipOfGame(userid, gameid);
+        if (!authorized) {
+            res.status(401)
+                .send({
+                    code: 401,
+                    error: "Not Authorized",
+                    errorMessage: `User ${username} is not authorized to access game id ${gameid}`
+                });
+            return;
+        }
+
+        const result = await updateAnswer(answerid, req.body);
+        res.status(200)
+            .send(result);
+        return;
+    } catch (err) {
+
+    }
+})
 
 app.post('/users/avatar', authenticateUser, upload.single('avatar'), async (req: Request, res: Response) => {
     const { username, userid } = res.locals;
