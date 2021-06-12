@@ -57,6 +57,32 @@ export const createNewGame = createAsyncThunk<GameEntity, string>(
         }
     });
 
+export const createNewQuestion = createAsyncThunk(
+    'games/createNewQuestion',
+    async (newQuestionRequest: { gameid: number, question: string, index: number, hint: string }, thunkAPI) => {
+        try {
+            const token = (thunkAPI.getState() as AppState).user.token;
+            const res = await axios.post(`/games/${newQuestionRequest.gameid}/questions`, {
+               index: newQuestionRequest.index,
+               answers: [],
+               hint: newQuestionRequest.hint,
+               question: newQuestionRequest.question
+            },
+            {
+               headers: {
+                   'Authorization': `Bearer ${token}`
+               }
+            });
+
+            return res.data;
+       } catch (err) {
+           console.log(`An error occurred creating new answer ${newQuestionRequest}`);
+           console.log(err);
+           throw err;
+       }
+    }
+)
+
 export const fetchGames = createAsyncThunk<GameEntity[]>(
     'games/fetchGames',
     async (_: string | void, thunkAPI) => {
@@ -109,6 +135,30 @@ export const patchAnswer = createAsyncThunk(
         }
     }
 )
+
+export const createNewAnswer = createAsyncThunk(
+    'answer/createNewAnswer',
+    async (newAnswerRequest: { gameid: number, questionid: number, answer: string, index: number, correct: boolean }, thunkAPI) => {
+        try {
+             const token = (thunkAPI.getState() as AppState).user.token;
+             const res = await axios.post(`/games/${newAnswerRequest.gameid}/questions/${newAnswerRequest.questionid}/answers`, {
+                index: newAnswerRequest.index,
+                answer: newAnswerRequest.answer,
+                correct: newAnswerRequest.correct
+             },
+             {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+             });
+
+             return res.data;
+        } catch (err) {
+            console.log(`An error occurred creating new answer ${newAnswerRequest}`);
+            console.log(err);
+            throw err;
+        }
+    });
 
 export const deleteAnswer = createAsyncThunk<number, {gameid: number, answerid: number}>(
     'answers/deleteAnswer',
@@ -199,11 +249,21 @@ const gamesSlice = createSlice({
             state.loading = false;
             state.error = false;
             answersEntityAdapter.upsertOne(state.answers, action.payload);
-        })
+        });
         builder.addCase(deleteAnswer.fulfilled, (state, action) => {
             state.loading = false;
             state.error = false;
             answersEntityAdapter.removeOne(state.answers, action.payload);
+        });
+        builder.addCase(createNewAnswer.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = false;
+            answersEntityAdapter.addOne(state.answers, action.payload);
+        })
+        builder.addCase(createNewQuestion.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = false;
+            questionsEntityAdapter.addOne(state.questions, action.payload);
         })
     }
 });

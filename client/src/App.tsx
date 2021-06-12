@@ -19,7 +19,6 @@ import GamePage from './pages/GamePage';
 
 function App() {
   const dispatch = useAppDispatch();
-  const history = useHistory();
   const authenticated = useSelector(isAuthenticated);
   let homePage;
   if (authenticated) {
@@ -28,18 +27,11 @@ function App() {
     homePage = <UnauthenticatedHomePage />
   }
 
-  function logout() {
-    dispatch(logoutAction())
-      .then(() => {
-        history && history.push('/');
-      })
-  }
-
   return (
     <div className="App">
       <Router>
-        <Header doLogout={logout}/>
-        <Box mt={8}>
+        <Header/>
+        <Box style={{minHeight: '600px'}} mt={8}>
           <Container>
             <Switch>
               <Route exact={true} path="/">

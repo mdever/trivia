@@ -360,7 +360,7 @@ export async function insertNewAnswer(questionid: number, answer: CreateAnswerRe
                     questionId: questionid,
                     answer: answer.answer,
                     index: index,
-                    correct: answer.correct,
+                    correct: answer.correct ? true : false,
                     createdAt: createdAt,
                     updatedAt: createdAt
                 });
@@ -396,7 +396,7 @@ export async function updateAnswer(answerid: number, answer: Partial<CreateAnswe
                 ...answer,
                 id: row.id,
                 questionId: row.questionId,
-                correct: answer.correct === true ? 1 : answer.correct === false ? 0 : row.correct ? 1 : 0,
+                correct: answer.correct,
                 updatedAt
             };
 
