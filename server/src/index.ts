@@ -6,6 +6,8 @@ import { CreateAnswerRequest, CreateGameRequest, CreateQuestionRequest, LoginReq
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import process from 'process';
+import fs from 'fs';
+import https from 'https';
 
 
 const upload = multer({
@@ -514,6 +516,25 @@ app.get('/users/:username/avatar', authenticateByCookie, async (req: Request, re
     }
 });
 
-app.listen(8080, () => {
-    console.log('App is listening at http://localhost:8080');
-})
+
+
+if (process.env.NODE_ENV === 'prod') {
+    var options = {
+        key: fs.readFileSync('/ssl/privatekey.pem'),
+        cert: fs.readFileSync('/ssl/certificate.pem')
+    };
+    const server = https.createServer(options, app);
+    server.on('error', (err) => {
+        console.log('Server level error occurred: ');
+        console.log(err);
+        throw err;
+    })
+    server.listen(8080, () => {
+        console.log('App is listening with SSL at port 8080');
+    });
+} else {
+    app.listen(8080, () => {
+        console.log('App is listening at http://localhost:8080');
+    })
+}
+
