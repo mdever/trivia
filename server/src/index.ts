@@ -8,7 +8,8 @@ import multer from 'multer';
 import process from 'process';
 import fs from 'fs';
 import https from 'https';
-
+import ws from 'ws';
+import url from 'url';
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -516,14 +517,15 @@ app.get('/users/:username/avatar', authenticateByCookie, async (req: Request, re
     }
 });
 
+const rooms: { [code: string]: { server: ws.Server, clients: any[] }} = {}
 
-
+let server;
 if (process.env.NODE_ENV === 'prod') {
     var options = {
         key: fs.readFileSync('/ssl/privatekey.pem'),
         cert: fs.readFileSync('/ssl/certificate.pem')
     };
-    const server = https.createServer(options, app);
+    server = https.createServer(options, app);
     server.on('error', (err) => {
         console.log('Server level error occurred: ');
         console.log(err);
@@ -533,8 +535,37 @@ if (process.env.NODE_ENV === 'prod') {
         console.log('App is listening with SSL at port 8080');
     });
 } else {
-    app.listen(8080, () => {
+    server = app.listen(8080, () => {
         console.log('App is listening at http://localhost:8080');
     })
 }
+
+server.on('upgrade', (request, socket, head) => {
+    const pathname = (new url.URL(request.url)).pathname;
+    let wssInfo = rooms[pathname];
+    if (!wssInfo) {
+        wssInfo = { server: new ws.Server({noServer: true}), clients: [] };
+        rooms[pathname] = wssInfo
+    }
+    let wss = wssInfo.server;
+
+    wss.on('connection', websocket => {
+        console.log('New Websocket connection opened on wss');
+        console.log(JSON.parse(JSON.stringify(wss)));
+        console.log('ws info');
+        console.log(JSON.parse(JSON.stringify(ws)))
+        wssInfo.clients.push(websocket);
+        websocket.on('message', message => {
+            wss.clients.forEach(client => {
+                if (client !== websocket && client.readyState === WebSocket.OPEN) {
+                    client.send(message);
+                }
+            })
+        });
+    })
+
+    wss.handleUpgrade(request, socket, head, socket => {
+        wss.emit('connection', socket, request);
+    });
+})
 
