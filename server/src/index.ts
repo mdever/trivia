@@ -10,6 +10,7 @@ import fs from 'fs';
 import https from 'https';
 import ws from 'ws';
 import url from 'url';
+import { processOwnerMessage, processPlayerMessage } from './game';
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -28,7 +29,7 @@ if (process.env.NODE_ENV) {
 app.use(cookieParser());
 app.use(express.json());
 
-app.post('/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<NewUserResponse>) => {
+app.post('/api/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<NewUserResponse>) => {
     const userRequest: NewUserRequest = req.body;
     try {
         const result = await createNewUser(userRequest);
@@ -54,7 +55,7 @@ app.post('/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<Ne
     }
 });
 
-app.post('/sessions', async (req: Request<{}, {}, LoginRequest>, res) => {
+app.post('/api/sessions', async (req: Request<{}, {}, LoginRequest>, res) => {
     const {
         username,
         password
@@ -152,7 +153,7 @@ async function authenticateByCookie(req: Request, res: Response, next: NextFunct
     }
 }
 
-app.delete('/sessions', authenticateUser, async (req: Request, res: Response) => {
+app.delete('/api/sessions', authenticateUser, async (req: Request, res: Response) => {
     const { username, userid } = res.locals;
 
     const token = req.header('Authorization').slice(7);
@@ -173,7 +174,7 @@ app.delete('/sessions', authenticateUser, async (req: Request, res: Response) =>
 });
 
 
-app.post('/games', authenticateUser, async (req: Request<{}, {}, CreateGameRequest>, res: Response) => {
+app.post('/api/games', authenticateUser, async (req: Request<{}, {}, CreateGameRequest>, res: Response) => {
     const { username, userid } = res.locals
     const { name } = req.body;
 
@@ -196,7 +197,7 @@ app.post('/games', authenticateUser, async (req: Request<{}, {}, CreateGameReque
     }
 });
 
-app.get('/games', authenticateUser, async (req: Request, res: Response) => {
+app.get('/api/games', authenticateUser, async (req: Request, res: Response) => {
     const { username, userid } = res.locals
 
     try {
@@ -218,7 +219,7 @@ app.get('/games', authenticateUser, async (req: Request, res: Response) => {
     }    
 });
 
-app.post('/games/:gameid/questions', authenticateUser, async (req: Request<{gameid: string}, {}, CreateQuestionRequest>, res: Response) => {
+app.post('/api/games/:gameid/questions', authenticateUser, async (req: Request<{gameid: string}, {}, CreateQuestionRequest>, res: Response) => {
     const { username, userid } = res.locals;
     if (!parseInt(req.params.gameid)) {
         res.status(400)
@@ -265,7 +266,7 @@ app.post('/games/:gameid/questions', authenticateUser, async (req: Request<{game
     }
 })
 
-app.get('/games/:gameid/questions', authenticateUser, async (req: Request<{gameid: string}>, res: Response) => {
+app.get('/api/games/:gameid/questions', authenticateUser, async (req: Request<{gameid: string}>, res: Response) => {
     const { username, userid } = res.locals;
     if (!parseInt(req.params.gameid)) {
         res.status(400)
@@ -303,7 +304,7 @@ app.get('/games/:gameid/questions', authenticateUser, async (req: Request<{gamei
 
 });
 
-app.post('/games/:gameid/questions/:questionid/answers', authenticateUser, async (req: Request<{ gameid: string, questionid: string }, {}, CreateAnswerRequest>, res: Response) => {
+app.post('/api/games/:gameid/questions/:questionid/answers', authenticateUser, async (req: Request<{ gameid: string, questionid: string }, {}, CreateAnswerRequest>, res: Response) => {
     const {userid, username} = res.locals;
     const gameid = parseInt(req.params.gameid);
     const questionid = parseInt(req.params.questionid);
@@ -348,7 +349,7 @@ app.post('/games/:gameid/questions/:questionid/answers', authenticateUser, async
     }
 });
 
-app.patch('/games/:gameid/answers/:answerid', authenticateUser, async (req: Request<{gameid: string, answerid: string}, {}, Partial<CreateAnswerRequest>>, res: Response) => {
+app.patch('/api/games/:gameid/answers/:answerid', authenticateUser, async (req: Request<{gameid: string, answerid: string}, {}, Partial<CreateAnswerRequest>>, res: Response) => {
     const { username, userid } = res.locals;
     const gameid = parseInt(req.params.gameid);
     const answerid = parseInt(req.params.answerid);
@@ -391,7 +392,7 @@ app.patch('/games/:gameid/answers/:answerid', authenticateUser, async (req: Requ
     }
 })
 
-app.delete(`/games/:gameid/answers/:answerid`, authenticateUser, async (req: Request<{gameid: string, answerid: string}>, res: Response) => {
+app.delete(`/api/games/:gameid/answers/:answerid`, authenticateUser, async (req: Request<{gameid: string, answerid: string}>, res: Response) => {
     const { username, userid } = res.locals;
     const gameid = parseInt(req.params.gameid);
     const answerid = parseInt(req.params.answerid);
@@ -459,7 +460,7 @@ app.delete(`/games/:gameid/answers/:answerid`, authenticateUser, async (req: Req
     }
 })
 
-app.post('/users/avatar', authenticateUser, upload.single('avatar'), async (req: Request, res: Response) => {
+app.post('/api/users/avatar', authenticateUser, upload.single('avatar'), async (req: Request, res: Response) => {
     const { username, userid } = res.locals;
     if (!req['file']) {
         res.status(400)
@@ -491,7 +492,7 @@ app.post('/users/avatar', authenticateUser, upload.single('avatar'), async (req:
     }
 });
 
-app.get('/users/:username/avatar', authenticateByCookie, async (req: Request, res: Response) => {
+app.get('/api/users/:username/avatar', authenticateByCookie, async (req: Request, res: Response) => {
 
     try {
         console.log(`Got a request to fetch an avatar for ${req.params.username}`)
@@ -517,7 +518,7 @@ app.get('/users/:username/avatar', authenticateByCookie, async (req: Request, re
     }
 });
 
-const rooms: { [code: string]: { server: ws.Server, clients: any[] }} = {}
+const rooms: { [code: string]: { server: ws.Server, clients: {websocket: any, owner: boolean}[] }} = {}
 
 let server;
 if (process.env.NODE_ENV === 'prod') {
@@ -541,29 +542,38 @@ if (process.env.NODE_ENV === 'prod') {
 }
 
 server.on('upgrade', (request, socket, head) => {
-    const pathname = (new url.URL(request.url)).pathname;
+    let pathname = request.url.replace('/ws/', '');
+    pathname = pathname.replace('/wss/');
+
     let wssInfo = rooms[pathname];
     if (!wssInfo) {
-        wssInfo = { server: new ws.Server({noServer: true}), clients: [] };
-        rooms[pathname] = wssInfo
+        console.log('Attempt to connect to a room that does not exist, making a new  one');
+        const wss = new ws.Server({noServer: true});
+        let owner = true;
+        wssInfo = { server: wss, clients: [] };
+        rooms[pathname] = wssInfo;
+        wss.on('connection', websocket => {
+            console.log('New Websocket connection opened on wss');
+            console.dir(wss);
+            console.log('ws info');
+            console.dir(ws);
+            wssInfo.clients.push({ websocket, owner });
+            owner = false;
+            let isOwner = rooms[pathname].clients.find(c => c.websocket === websocket).owner;
+            if (isOwner) {
+                websocket.on('message', message => {
+                    console.log(`Received new owner message ${message}`);
+                    processOwnerMessage(wss, pathname, message.toString('utf-8'));
+                });
+            } else {
+                websocket.on('message', message => {
+                    console.log(`Receieved new player message ${message}`);
+                    processPlayerMessage(wss, pathname, message.toString('utf-8'));
+                });
+            }
+        })
     }
     let wss = wssInfo.server;
-
-    wss.on('connection', websocket => {
-        console.log('New Websocket connection opened on wss');
-        console.log(JSON.parse(JSON.stringify(wss)));
-        console.log('ws info');
-        console.log(JSON.parse(JSON.stringify(ws)))
-        wssInfo.clients.push(websocket);
-        websocket.on('message', message => {
-            wss.clients.forEach(client => {
-                if (client !== websocket && client.readyState === WebSocket.OPEN) {
-                    client.send(message);
-                }
-            })
-        });
-    })
-
     wss.handleUpgrade(request, socket, head, socket => {
         wss.emit('connection', socket, request);
     });

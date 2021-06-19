@@ -41,7 +41,7 @@ export const createNewGame = createAsyncThunk<GameEntity, string>(
     async (name: string, thunkAPI) => {
         const token = (thunkAPI.getState() as AppState).user.token;
         try {
-            const res = await axios.post('/games', {
+            const res = await axios.post('/api/games', {
                 name
             }, {
                 headers: {
@@ -62,7 +62,7 @@ export const createNewQuestion = createAsyncThunk(
     async (newQuestionRequest: { gameid: number, question: string, index: number, hint: string }, thunkAPI) => {
         try {
             const token = (thunkAPI.getState() as AppState).user.token;
-            const res = await axios.post(`/games/${newQuestionRequest.gameid}/questions`, {
+            const res = await axios.post(`/api/games/${newQuestionRequest.gameid}/questions`, {
                index: newQuestionRequest.index,
                answers: [],
                hint: newQuestionRequest.hint,
@@ -87,7 +87,7 @@ export const fetchGames = createAsyncThunk<GameEntity[]>(
     'games/fetchGames',
     async (_: string | void, thunkAPI) => {
         const token = (thunkAPI.getState() as AppState).user.token;
-        const res = await axios.get('http://localhost:3000/games', {
+        const res = await axios.get('/api/games', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -100,7 +100,7 @@ export const fetchGameDetails = createAsyncThunk(
     async (gameid: number, thunkAPI) => {
         try {
             const token = (thunkAPI.getState() as AppState).user.token;
-            const res = await axios.get(`/games/${gameid}/questions`, {
+            const res = await axios.get(`/api/games/${gameid}/questions`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -118,7 +118,7 @@ export const patchAnswer = createAsyncThunk(
     async (changeRequest: {id: number, gameid: number, changes: Partial<{answer: string, correct: boolean}>}, thunkAPI) => {
         try {
             const token = (thunkAPI.getState() as AppState).user.token;
-            const res = await axios.patch(`/games/${changeRequest.gameid}/answers/${changeRequest.id}`, {
+            const res = await axios.patch(`/api/games/${changeRequest.gameid}/answers/${changeRequest.id}`, {
                 answer: changeRequest.changes.answer,
                 correct: changeRequest.changes.correct
             }, {
@@ -141,7 +141,7 @@ export const createNewAnswer = createAsyncThunk(
     async (newAnswerRequest: { gameid: number, questionid: number, answer: string, index: number, correct: boolean }, thunkAPI) => {
         try {
              const token = (thunkAPI.getState() as AppState).user.token;
-             const res = await axios.post(`/games/${newAnswerRequest.gameid}/questions/${newAnswerRequest.questionid}/answers`, {
+             const res = await axios.post(`/api/games/${newAnswerRequest.gameid}/questions/${newAnswerRequest.questionid}/answers`, {
                 index: newAnswerRequest.index,
                 answer: newAnswerRequest.answer,
                 correct: newAnswerRequest.correct
@@ -165,7 +165,7 @@ export const deleteAnswer = createAsyncThunk<number, {gameid: number, answerid: 
     async (deleteRequest, thunkAPI) => {
         try {
             const token = (thunkAPI.getState() as AppState).user.token;
-            const res = await axios.delete(`/games/${deleteRequest.gameid}/answers/${deleteRequest.answerid}`, {
+            const res = await axios.delete(`/api/games/${deleteRequest.gameid}/answers/${deleteRequest.answerid}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

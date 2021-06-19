@@ -18,7 +18,7 @@ export const registerNewUser = createAsyncThunk<{ user: { username: string, toke
     'user/registerNewUser',
     async ({ username, password }, thunkAPI) => {
         try {
-            const res = await axios.post('/users', {username, password});
+            const res = await axios.post('/api/users', {username, password});
             window.localStorage.setItem('username', res.data.username);
             window.localStorage.setItem('token', res.data.token);
             return {
@@ -40,7 +40,7 @@ export const authenticateUser = createAsyncThunk<{ user: { username: string, tok
     async ({username, password}, thunkAPI) => {
         try {
 
-            const res = await axios.post('/sessions', {username, password});
+            const res = await axios.post('/api/sessions', {username, password});
             window.localStorage.setItem('username', res.data.user.username);
             window.localStorage.setItem('token', res.data.token);
             return {
@@ -69,7 +69,7 @@ export const logoutAction = createAsyncThunk(
         }
 
         try {
-            const response = await axios.delete('/sessions', {
+            const response = await axios.delete('/api/sessions', {
                 headers: {
                     'Authorization': `Bearer ${state.user.token}`
                 }

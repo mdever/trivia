@@ -1,4 +1,5 @@
 trivia.db
+roomdb.db/
 **/dist
 **/node_modules
 .env
