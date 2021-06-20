@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom"
+import { useHistory, useParams } from "react-router-dom"
 import { useAppDispatch } from "../store";
 import { fetchGameDetails, fetchGames, selectAllGames, selectGameDetails } from "../store/gamesSlice";
 import EditGame from '../components/EditGame';
@@ -11,8 +11,7 @@ export default function GamePage() {
     const dispatch = useAppDispatch();
     const games = useSelector(selectAllGames);
     const gameDetails = useSelector(selectGameDetails(parseInt(id)));
-    const token = useSelector(selectToken);
-    const username = useSelector(selectUsername);
+    const history = useHistory();
 
     useEffect(() => {
         let gameid = parseInt(id);
@@ -29,15 +28,15 @@ export default function GamePage() {
         } else {
             protocol = 'wss';
         }
-        const ws = new WebSocket(`${protocol}://${username}:${token}@${window.location.host}/ws/ABCDE`);
+        const ws = new WebSocket(`${protocol}://${window.location.host}/ws/start/${id}`);
 
         ws.onopen = function open() {
-            ws.send("I'm the owner of the room");
+            // Make ws available globally
         };
 
-        ws.onmessage = function message(msg) {
+        ws.onmessage = function message({data}) {
             console.log('Received message');
-            console.log(msg);
+            console.log(data);
         };
     }
 

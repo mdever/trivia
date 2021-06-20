@@ -29,6 +29,10 @@ if (process.env.NODE_ENV) {
 app.use(cookieParser());
 app.use(express.json());
 
+function parseCookie(cookieStr: string, key: string): string | null {
+    return cookieStr.split(';')?.map(kv => kv.split('=').map(s => s.trim()))?.find(kv => kv[0] === key)[1];
+}
+
 app.post('/api/users', async (req: Request<{}, {}, NewUserRequest>, res: Response<NewUserResponse>) => {
     const userRequest: NewUserRequest = req.body;
     try {
@@ -518,7 +522,7 @@ app.get('/api/users/:username/avatar', authenticateByCookie, async (req: Request
     }
 });
 
-const rooms: { [code: string]: { server: ws.Server, clients: {websocket: any, owner: boolean}[] }} = {}
+const rooms: { [code: string]: { server: ws.Server, ownerId: number, clients: {websocket: any, userid: number, username: string}[] }} = {}
 
 let server;
 if (process.env.NODE_ENV === 'prod') {
@@ -541,37 +545,65 @@ if (process.env.NODE_ENV === 'prod') {
     })
 }
 
-server.on('upgrade', (request, socket, head) => {
-    let pathname = request.url.replace('/ws/', '');
-    pathname = pathname.replace('/wss/');
+function genRoomCode(): string {
+    const list = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
+    var res = "";
+    for(var i = 0; i < 6; i++) {
+        var rnd = Math.floor(Math.random() * list.length);
+        res = res + list.charAt(rnd);
+    }
+    return res;
+}
 
-    let wssInfo = rooms[pathname];
-    if (!wssInfo) {
-        console.log('Attempt to connect to a room that does not exist, making a new  one');
+server.on('upgrade', async (request, socket, head) => {
+    let pathname: string = request.url.replace('/ws/', '');
+    pathname = pathname.replace('/wss/', '');
+    let wssInfo;
+    if (pathname.includes('start')) { // Request to start a game
+        const match = pathname.match(/start\/(\d+)/);
+        const gameid = match[1];
+        const creatorSessionId = parseCookie(request.headers.cookie, 'session');
+        const { userid: ownerUserId, username: ownerUserName } = await checkForSessionAndFetchUser(creatorSessionId);
+        const authorized = await checkOwnershipOfGame(ownerUserId, gameid);
+        if (!authorized) {
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.pipe(socket);
+            return;
+        }
+
         const wss = new ws.Server({noServer: true});
         let owner = true;
-        wssInfo = { server: wss, clients: [] };
-        rooms[pathname] = wssInfo;
-        wss.on('connection', websocket => {
+        wssInfo = { server: wss, ownerId: parseInt(ownerUserId), clients: [] };
+        const roomCode = genRoomCode();
+        rooms[roomCode] = wssInfo;
+
+        wss.on('connection', async (websocket) => {
             console.log('New Websocket connection opened on wss');
             console.dir(wss);
             console.log('ws info');
             console.dir(ws);
-            wssInfo.clients.push({ websocket, owner });
-            owner = false;
-            let isOwner = rooms[pathname].clients.find(c => c.websocket === websocket).owner;
+            const sessionid = parseCookie(request.headers.cookie, 'session');
+            const { userid, username } = await checkForSessionAndFetchUser(sessionid);
+            wssInfo.clients.push({ websocket, userid, username });
+            let isOwner = userid === ownerUserId;
             if (isOwner) {
                 websocket.on('message', message => {
                     console.log(`Received new owner message ${message}`);
                     processOwnerMessage(wss, pathname, message.toString('utf-8'));
                 });
+                websocket.send(JSON.stringify({
+                    event: 'SET_CODE',
+                    payload: roomCode
+                }));
             } else {
                 websocket.on('message', message => {
                     console.log(`Receieved new player message ${message}`);
                     processPlayerMessage(wss, pathname, message.toString('utf-8'));
                 });
             }
-        })
+        });
+    } else {
+        let wssInfo = rooms[pathname];
     }
     let wss = wssInfo.server;
     wss.handleUpgrade(request, socket, head, socket => {
