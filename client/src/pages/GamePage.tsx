@@ -5,6 +5,8 @@ import { useAppDispatch } from "../store";
 import { fetchGameDetails, fetchGames, selectAllGames, selectGameDetails } from "../store/gamesSlice";
 import EditGame from '../components/EditGame';
 import { selectToken, selectUsername } from "../store/userSlice";
+import { Grid, Button } from '@material-ui/core';
+
 
 export default function GamePage() {
     const { id } = useParams<{id: string}>();
@@ -30,13 +32,17 @@ export default function GamePage() {
         }
         const ws = new WebSocket(`${protocol}://${window.location.host}/ws/start/${id}`);
 
-        ws.onopen = function open() {
-            // Make ws available globally
-        };
-
         ws.onmessage = function message({data}) {
             console.log('Received message');
             console.log(data);
+            const message = JSON.parse(data);
+            if (message.event !== 'SET_CODE') {
+                console.log('Something went wrong, got an unexpected response from server');
+                ws.close();
+                return;
+            }
+            ws.onmessage = null;
+            history.push(`/rooms/${message.payload}`, {owner: true, ws});
         };
     }
 
@@ -48,7 +54,11 @@ export default function GamePage() {
             }
             {
                 gameDetails &&
-                <button onClick={startGame}>Start Game</button>
+                <Grid container spacing={3}>
+                    <Grid item xs={3}>
+                        <Button color="primary" variant="contained" onClick={startGame}>Start Game</Button>
+                    </Grid>
+                </Grid>
             }
             {
                 gameDetails &&

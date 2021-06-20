@@ -46,6 +46,9 @@ function App() {
               <Route path="/profile">
                 <ProfilePage />
               </Route>
+              <Route path="/rooms/:roomCode">
+                
+              </Route>
             </Switch>
           </Container>
         </Box>
