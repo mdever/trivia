@@ -37,7 +37,7 @@ export default function ProfilePage() {
         const data = new FormData();
         data.append('avatar', file);
 
-        axios.post('/users/avatar', data, {
+        axios.post('/api/users/avatar', data, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
