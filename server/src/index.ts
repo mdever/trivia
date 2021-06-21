@@ -592,12 +592,12 @@ server.on('upgrade', async (request, socket, head) => {
 
         await createNewGameState(newGameState);
 
-        wss.on('connection', async (websocket) => {
+        wss.on('connection', async (websocket, innerRequest) => {
             console.log('New Websocket connection opened on wss');
             console.dir(wss);
             console.log('ws info');
             console.dir(ws);
-            const sessionid = parseCookie(request.headers.cookie, 'session');
+            const sessionid = parseCookie(innerRequest.headers.cookie, 'session');
             const { userid, username } = await checkForSessionAndFetchUser(sessionid);
 
             let isOwner = userid === ownerUserId;
