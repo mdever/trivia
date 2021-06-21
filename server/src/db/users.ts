@@ -106,7 +106,7 @@ export async function authenticate(username: string, password: string): Promise<
     });
 }
 
-export function checkForSessionAndFetchUser(token: string): Promise<{userid: string, username: string}> {
+export function checkForSessionAndFetchUser(token: string): Promise<{userid: number, username: string}> {
     return new Promise((resolve, reject) => {
         selectUserIdFromSession.get(token, (err, row) => {
             if (err) {

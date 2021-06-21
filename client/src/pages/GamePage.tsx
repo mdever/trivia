@@ -1,12 +1,11 @@
-import { useEffect } from "react"
+import { useContext, useEffect } from "react"
 import { useSelector } from "react-redux";
 import { useHistory, useParams } from "react-router-dom"
 import { useAppDispatch } from "../store";
 import { fetchGameDetails, fetchGames, selectAllGames, selectGameDetails } from "../store/gamesSlice";
 import EditGame from '../components/EditGame';
-import { selectToken, selectUsername } from "../store/userSlice";
 import { Grid, Button } from '@material-ui/core';
-
+import { WebSocketContext } from "../context/WebSocketContext";
 
 export default function GamePage() {
     const { id } = useParams<{id: string}>();
@@ -14,6 +13,7 @@ export default function GamePage() {
     const games = useSelector(selectAllGames);
     const gameDetails = useSelector(selectGameDetails(parseInt(id)));
     const history = useHistory();
+    const { getWs, setWs } = useContext(WebSocketContext);
 
     useEffect(() => {
         let gameid = parseInt(id);
@@ -36,13 +36,10 @@ export default function GamePage() {
             console.log('Received message');
             console.log(data);
             const message = JSON.parse(data);
-            if (message.event !== 'SET_CODE') {
-                console.log('Something went wrong, got an unexpected response from server');
-                ws.close();
-                return;
-            }
+
             ws.onmessage = null;
-            history.push(`/rooms/${message.payload}`, {owner: true, ws});
+            setWs(ws);
+            history.push(`/rooms/${message.roomCode}`, {owner: true, gameState: message});
         };
     }
 

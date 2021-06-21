@@ -2,7 +2,7 @@ import express, { NextFunction } from 'express';
 import { Request, Response } from 'express';
 import { checkOwnershipOfGame, createNewGame, deleteAnswer, fetchGameForAnswerId, getGamesByUserId, getQuestionsForGame, insertNewAnswer, insertNewQuestion, updateAnswer, validateOwnershipOfGame } from './db/games';
 import { authenticate, checkForSessionAndFetchUser, createNewUser, fetchAvatarByUsername, logout, updateAvatarForUser } from './db/users';
-import { CreateAnswerRequest, CreateGameRequest, CreateQuestionRequest, LoginRequest, NewUserRequest, NewUserResponse } from './types';
+import { CreateAnswerRequest, CreateGameRequest, CreateQuestionRequest, GameSessionInfo, GameState, LoginRequest, NewUserRequest, NewUserResponse } from './types';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import process from 'process';
@@ -10,7 +10,8 @@ import fs from 'fs';
 import https from 'https';
 import ws from 'ws';
 import url from 'url';
-import { processOwnerMessage, processPlayerMessage } from './game';
+import { createNewGameState, processOwnerMessage, processPlayerMessage } from './game';
+import { fetchGameState, patchGameState } from './db';
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -522,7 +523,7 @@ app.get('/api/users/:username/avatar', authenticateByCookie, async (req: Request
     }
 });
 
-const rooms: { [code: string]: { server: ws.Server, ownerId: number, clients: {websocket: any, userid: number, username: string}[] }} = {}
+const rooms: { [code: string]: GameSessionInfo } = {}
 
 let server;
 if (process.env.NODE_ENV === 'prod') {
@@ -558,10 +559,10 @@ function genRoomCode(): string {
 server.on('upgrade', async (request, socket, head) => {
     let pathname: string = request.url.replace('/ws/', '');
     pathname = pathname.replace('/wss/', '');
-    let wssInfo;
+    let wssInfo: GameSessionInfo;
     if (pathname.includes('start')) { // Request to start a game
         const match = pathname.match(/start\/(\d+)/);
-        const gameid = match[1];
+        const gameid = parseInt(match[1]);
         const creatorSessionId = parseCookie(request.headers.cookie, 'session');
         const { userid: ownerUserId, username: ownerUserName } = await checkForSessionAndFetchUser(creatorSessionId);
         const authorized = await checkOwnershipOfGame(ownerUserId, gameid);
@@ -572,10 +573,24 @@ server.on('upgrade', async (request, socket, head) => {
         }
 
         const wss = new ws.Server({noServer: true});
-        let owner = true;
-        wssInfo = { server: wss, ownerId: parseInt(ownerUserId), clients: [] };
+
+        wssInfo = { server: wss, owner: { userid: ownerUserId, username: ownerUserName, websocket: null}, clients: [] };
         const roomCode = genRoomCode();
         rooms[roomCode] = wssInfo;
+
+        const newGameState: GameState = {
+            roomCode,
+            gameId: gameid,
+            ownerId: ownerUserId,
+            ownerName: ownerUserName,
+            state: 'AWAITING_PLAYERS',
+            lastAction: 'PLAYER_JOINED',
+            currentQuestion: null,
+            previousQuestions: [],
+            players: [],
+        }
+
+        await createNewGameState(newGameState);
 
         wss.on('connection', async (websocket) => {
             console.log('New Websocket connection opened on wss');
@@ -584,26 +599,36 @@ server.on('upgrade', async (request, socket, head) => {
             console.dir(ws);
             const sessionid = parseCookie(request.headers.cookie, 'session');
             const { userid, username } = await checkForSessionAndFetchUser(sessionid);
-            wssInfo.clients.push({ websocket, userid, username });
+
             let isOwner = userid === ownerUserId;
             if (isOwner) {
+                wssInfo.owner.websocket = websocket;
                 websocket.on('message', message => {
                     console.log(`Received new owner message ${message}`);
-                    processOwnerMessage(wss, pathname, message.toString('utf-8'));
+                    processOwnerMessage(wssInfo, pathname, message.toString('utf-8'));
                 });
-                websocket.send(JSON.stringify({
-                    event: 'SET_CODE',
-                    payload: roomCode
-                }));
+                websocket.send(JSON.stringify(newGameState));
             } else {
+                wssInfo.clients.push({ websocket, userid, username });
+                let gameState = await fetchGameState(roomCode);
+                gameState.players.push({
+                    playerId: userid,
+                    username: username,
+                    answers: [],
+                    score: 0
+                });
+                await patchGameState(gameState);
+                wssInfo.server.clients.forEach(ws => {
+                    ws.send(JSON.stringify(gameState));
+                });
                 websocket.on('message', message => {
                     console.log(`Receieved new player message ${message}`);
-                    processPlayerMessage(wss, pathname, message.toString('utf-8'));
+                    processPlayerMessage(wssInfo, pathname, userid, message.toString('utf-8'));
                 });
             }
         });
     } else {
-        let wssInfo = rooms[pathname];
+        wssInfo = rooms[pathname];
     }
     let wss = wssInfo.server;
     wss.handleUpgrade(request, socket, head, socket => {

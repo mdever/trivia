@@ -16,6 +16,9 @@ import RegisterPage from './pages/RegisterPage';
 import { useAppDispatch } from './store';
 import ProfilePage from './pages/ProfilePage';
 import GamePage from './pages/GamePage';
+import React from 'react';
+import { WebSocketContext } from './context/WebSocketContext';
+import GameRoom from './pages/GameRoom';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -47,7 +50,7 @@ function App() {
                 <ProfilePage />
               </Route>
               <Route path="/rooms/:roomCode">
-                
+                <GameRoom />
               </Route>
             </Switch>
           </Container>
