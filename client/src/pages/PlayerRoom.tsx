@@ -10,9 +10,16 @@ export default function PlayerRoom(props: { roomCode: string}) {
         if (getWs() === null) {
             const ws = new WebSocket(`ws://localhost:3000/ws/${props.roomCode}`);
             ws.onmessage = msg => {
-                setGameState(JSON.parse(msg.data));
+                setGameState(JSON.parse(msg.data).state);
             }
             setWs(ws);
+
+            ws.onerror = (err) => {
+                console.log("Something bad happened in PlayerRoom with the websocket");
+                console.dir(err);
+                ws.close();
+                setWs(null);
+            }
         }
     }, []);
 
@@ -21,7 +28,7 @@ export default function PlayerRoom(props: { roomCode: string}) {
             <p>I'm the player room</p>
             {
                 gameState &&
-                <pre>{JSON.stringify(gameState)}</pre>
+                <pre>{JSON.stringify(gameState, null, 2)}</pre>
             }
         </div>
     )

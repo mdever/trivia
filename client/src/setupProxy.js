@@ -13,7 +13,12 @@ module.exports =  function(app) {
             changeOrigin: true,
             ws: true
         });
+        const staticAvatarProxy = proxy.createProxyMiddleware({
+            target: 'http://localhost:8080',
+            changeOrigin: true
+        });
         app.use('/api', devAppProxy);
         app.use('/ws', devWsProxy);
+        app.use('/user.png', staticAvatarProxy);
     }
 }

@@ -39,7 +39,7 @@ export default function GamePage() {
 
             ws.onmessage = null;
             setWs(ws);
-            history.push(`/rooms/${message.roomCode}`, {owner: true, gameState: message});
+            history.push(`/rooms/${message.state.roomCode}`, {owner: true, gameState: message.state});
         };
     }
 
