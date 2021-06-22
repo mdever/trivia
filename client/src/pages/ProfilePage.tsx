@@ -65,7 +65,7 @@ export default function ProfilePage() {
                                 username &&
                                 <div>
                                     <h5>Avatar</h5>
-                                    <img alt="User Avatar" onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/users/${username}/avatar`} style={{height: '80px'}}></img>
+                                    <img alt="User Avatar" onError={fetchDefaultAvatar} src={useDefaultAvatar ? '/user.png' : `/api/users/${username}/avatar`} style={{height: '80px'}}></img>
                                 </div>
                             }
                             <Input type="file" style={{marginTop: '1rem', marginBottom: '1rem'}} onChange={handleFileSelect}/>
