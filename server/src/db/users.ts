@@ -161,7 +161,7 @@ export function updateAvatarForUser(userid: number, contents, filetype: string):
         console.log('About to insert file with filetype ' + filetype);
         console.log('And contents');
         console.log(contents);
-        db.run('UPDATE Users SET avatar_filetype = ?, avatar = ?', filetype, contents, (err) => {
+        db.run('UPDATE Users SET avatar_filetype = ?, avatar = ? WHERE id = ?', filetype, contents, userid, (err) => {
             if (err) {
                 console.log('Error in database layer. Could not insert image')
                 reject(err);
