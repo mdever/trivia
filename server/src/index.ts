@@ -607,7 +607,7 @@ server.on('upgrade', async (request, socket, head) => {
                     console.log(`Received new owner message ${message}`);
                     processOwnerMessage(wssInfo, pathname, message.toString('utf-8'));
                 });
-                websocket.send(JSON.stringify(newGameState));
+                websocket.send(JSON.stringify({event: { name: 'OWNER_INIT' }, state: newGameState}));
             } else {
                 wssInfo.clients.push({ websocket, userid, username });
                 let gameState = await fetchGameState(roomCode);
@@ -619,11 +619,21 @@ server.on('upgrade', async (request, socket, head) => {
                 });
                 await patchGameState(gameState);
                 wssInfo.server.clients.forEach(ws => {
-                    ws.send(JSON.stringify(gameState));
+                    ws.send(JSON.stringify({event: { name: 'PLAYER_JOINED', payload: { playerId: userid, username: username }}, state: gameState}));
                 });
                 websocket.on('message', message => {
                     console.log(`Receieved new player message ${message}`);
                     processPlayerMessage(wssInfo, pathname, userid, message.toString('utf-8'));
+                });
+                websocket.on('close', async function detach(code: number, reason: string) {
+                    let gameState = await fetchGameState(roomCode);
+                    gameState.players = gameState.players.filter(p => p.playerId !== userid);
+                    await patchGameState(gameState);
+                    wssInfo.server.clients.forEach(ws => {
+                        if (ws !== this) {
+                            ws.send(JSON.stringify(gameState));
+                        }
+                    });
                 });
             }
         });
