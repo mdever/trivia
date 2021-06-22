@@ -8,7 +8,13 @@ export default function PlayerRoom(props: { roomCode: string}) {
 
     useEffect(() => {
         if (getWs() === null) {
-            const ws = new WebSocket(`ws://localhost:3000/ws/${props.roomCode}`);
+            let protocol;
+            if (process.env.NODE_ENV === 'development') {
+                protocol = 'ws';
+            } else {
+                protocol = 'wss';
+            }
+            const ws = new WebSocket(`${protocol}://${window.location.host}/ws/${props.roomCode}`);
             ws.onmessage = msg => {
                 setGameState(JSON.parse(msg.data).state);
             }
